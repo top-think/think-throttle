@@ -32,7 +32,10 @@ class Throttle
         'key'    => true,
         // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
         'visit_rate' => null,
-        'visit_fail_text' => '访问频率受到限制，请稍等 %s秒 再试',
+        // 访问受限时返回的http状态码
+        'visit_fail_code' => 403,
+        // 访问受限时访问的文本信息
+        'visit_fail_text' => '访问频率受到限制，请稍等__WAIT__秒再试',
 
     ];
 
@@ -48,7 +51,7 @@ class Throttle
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
-        $this->config = array_merge($this->config, $config->get('middleware.throttle', []));
+        $this->config = array_merge($this->config, $config->get('throttle', []));
     }
 
     /**
@@ -63,7 +66,7 @@ class Throttle
             $key = call_user_func($key, $this, $request);
         }
 
-        if (false === $key || null === $this->config['visit_rate']) {
+        if (null === $key || false === $key || null === $this->config['visit_rate']) {
             // 关闭当前限制
             return;
         }
@@ -148,7 +151,10 @@ class Throttle
     {
         $allow = $this->allowRequest($request);
         if (!$allow) {
-            return Response::create(sprintf($this->config['visit_fail_text'], $this->wait_seconds))->code(403);
+            // 访问受限
+            $code = $this->config['visit_fail_code'];
+            $content = str_replace('__WAIT__', $this->wait_seconds, $this->config['visit_fail_text']);
+            return Response::create($content)->code($code);
         }
         $response = $next($request);
         return $response;
