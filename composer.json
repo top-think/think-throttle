@@ -1,0 +1,28 @@
+{
+    "name": "hongweipeng/think-middleware-throttle",
+    "description": "throttle middleware for thinkphp6",
+    "require": {
+        "php": ">=7.1.0",
+        "topthink/framework": "^6.0.0"
+    },
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "hongweipeng",
+            "email": "hongweichen8888@sina.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "think\\middleware\\": "src"
+        }
+    },
+    "extra": {
+        "think":{
+            "services":[
+                "think\\middleware\\Service"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}
