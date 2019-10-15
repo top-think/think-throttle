@@ -2,9 +2,9 @@
 
 namespace think\middleware;
 
-use think\Service as BaseService;
+use think\Service;
 
-class Service extends BaseService
+class ThrottleService extends Service
 {
     public function register()
     {

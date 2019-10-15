@@ -127,10 +127,10 @@ class Throttle
             return $val >= $now - $duration;
         }));
 
-        if (count($history) <= $num_requests) {
+        if (count($history) < $num_requests) {
             // 允许访问
             $history[] = $now;
-            $this->cache->set($key, $history, $now + $duration);
+            $this->cache->set($key, $history, $duration);
             return true;
         }
 

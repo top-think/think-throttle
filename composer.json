@@ -20,7 +20,7 @@
     "extra": {
         "think":{
             "services":[
-                "think\\middleware\\Service"
+                "think\\middleware\\ThrottleService"
             ]
         }
     },
