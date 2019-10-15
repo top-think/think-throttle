@@ -2,7 +2,7 @@
 
 declare (strict_types = 1);
 
-namespace think\middleware;
+namespace think\app;
 
 use Closure;
 use think\Cache;

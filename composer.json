@@ -14,7 +14,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "think\\middleware\\": "src"
+            "think\\app\\": "src"
         }
     },
     "extra": {

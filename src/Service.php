@@ -3,7 +3,6 @@
 namespace think\app;
 
 use think\Service as BaseService;
-use think\middleware\Throttle;
 
 class Service extends BaseService
 {
