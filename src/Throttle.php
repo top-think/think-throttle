@@ -48,6 +48,12 @@ class Throttle
         'd' => 86400,
     ];
 
+    protected $need_save = false;
+    protected $history = [];
+    protected $key = '';
+    protected $now = 0;
+    protected $expire = 0;
+
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
@@ -62,6 +68,7 @@ class Throttle
     protected function getCacheKey($request)
     {
         $key = $this->config['key'];
+
         if ($key instanceof \Closure) {
             $key = call_user_func($key, $this, $request);
         }
@@ -73,8 +80,8 @@ class Throttle
 
         if (true === $key) {
             $key = $request->ip();
-        } elseif (false !== strpos($key, '__IP__')) {
-            $key = str_replace('__IP__', $request->ip(), $key);
+        } elseif (false !== strpos($key, '__')) {
+            $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
         }
 
         return md5($key);
@@ -132,8 +139,11 @@ class Throttle
 
         if (count($history) < $num_requests) {
             // 允许访问
-            $history[] = $now;
-            $this->cache->set($key, $history, $duration);
+            $this->need_save = true;
+            $this->key = $key;
+            $this->now = $now;
+            $this->history = $history;
+            $this->expire = $duration;
             return true;
         }
 
@@ -157,6 +167,10 @@ class Throttle
             return Response::create($content)->code($code);
         }
         $response = $next($request);
+        if ($this->need_save && 200 == $response->getCode()) {
+            $this->history[] = $this->now;
+            $this->cache->set($this->key, $this->history, $this->expire);
+        }
         return $response;
     }
 
