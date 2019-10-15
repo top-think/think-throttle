@@ -1,6 +1,6 @@
 <?php
 
-namespace think\app;
+namespace think\middleware;
 
 use think\Service as BaseService;
 

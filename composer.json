@@ -14,13 +14,13 @@
     ],
     "autoload": {
         "psr-4": {
-            "think\\app\\": "src"
+            "think\\middleware\\": "src"
         }
     },
     "extra": {
         "think":{
             "services":[
-                "think\\app\\Service"
+                "think\\middleware\\Service"
             ]
         }
     },
