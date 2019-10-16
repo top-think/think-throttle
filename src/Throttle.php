@@ -97,7 +97,7 @@ class Throttle
     {
         list($num, $period) = explode("/", $rate);
         $num_requests = intval($num);
-        $duration = $this->duration[$period];
+        $duration = $this->duration[$period] ?? intval($period);
         return [$num_requests, $duration];
     }
 
