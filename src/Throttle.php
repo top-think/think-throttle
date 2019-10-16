@@ -33,9 +33,9 @@ class Throttle
         // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
         'visit_rate' => null,
         // 访问受限时返回的http状态码
-        'visit_fail_code' => 403,
+        'visit_fail_code' => 429,
         // 访问受限时访问的文本信息
-        'visit_fail_text' => '访问频率受到限制，请稍等__WAIT__秒再试',
+        'visit_fail_text' => 'Too Many Requests',
 
     ];
 
@@ -52,6 +52,7 @@ class Throttle
     protected $history = [];
     protected $key = '';
     protected $now = 0;
+    protected $num_requests = 0;
     protected $expire = 0;
 
     public function __construct(Cache $cache, Config $config)
@@ -144,6 +145,7 @@ class Throttle
             $this->now = $now;
             $this->history = $history;
             $this->expire = $duration;
+            $this->num_requests = $num_requests;
             return true;
         }
 
@@ -164,12 +166,22 @@ class Throttle
             // 访问受限
             $code = $this->config['visit_fail_code'];
             $content = str_replace('__WAIT__', $this->wait_seconds, $this->config['visit_fail_text']);
-            return Response::create($content)->code($code);
+            $response = Response::create($content)->code($code);
+            $response->header(['Retry-After' => $this->wait_seconds]);
+            return $response;
         }
         $response = $next($request);
         if ($this->need_save && 200 == $response->getCode()) {
             $this->history[] = $this->now;
             $this->cache->set($this->key, $this->history, $this->expire);
+
+            // 将速率限制 headers 添加到响应中
+            $remaining = $this->num_requests - count($this->history);
+            $response->header([
+                'X-Rate-Limit-Limit' => $this->num_requests,
+                'X-Rate-Limit-Remaining' => $remaining < 0 ? 0: $remaining,
+                'X-Rate-Limit-Reset' => $this->now + $this->wait_seconds,
+            ]);
         }
         return $response;
     }
