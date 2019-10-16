@@ -105,14 +105,13 @@ class Throttle
      * 计算距离下次合法请求还有多少秒
      * @param $history
      * @param $now
-     * @param $num_requests
      * @param $duration
      * @return void
      */
-    protected function wait($history, $now, $num_requests, $duration)
+    protected function wait($history, $now, $duration)
     {
         $wait_seconds = $history ? $duration - ($now - $history[0]) : $duration;
-        if ($wait_seconds <= 0) {
+        if ($wait_seconds < 0) {
             $wait_seconds = 0;
         }
         $this->wait_seconds = $wait_seconds;
@@ -149,7 +148,7 @@ class Throttle
             return true;
         }
 
-        $this->wait($history, $now, $num_requests, $duration);
+        $this->wait($history, $now, $duration);
         return false;
     }
 
@@ -180,7 +179,7 @@ class Throttle
             $response->header([
                 'X-Rate-Limit-Limit' => $this->num_requests,
                 'X-Rate-Limit-Remaining' => $remaining < 0 ? 0: $remaining,
-                'X-Rate-Limit-Reset' => $this->now + $this->wait_seconds,
+                'X-Rate-Limit-Reset' => $this->now + $this->expire,
             ]);
         }
         return $response;
