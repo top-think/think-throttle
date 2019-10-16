@@ -1,5 +1,5 @@
 {
-    "name": "hongweipeng/think-middleware-throttle",
+    "name": "topthink/think-throttle",
     "description": "throttle middleware for thinkphp6",
     "require": {
         "php": ">=7.1.0",
