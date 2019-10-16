@@ -1,6 +1,6 @@
 ## 安装
 ```
-composer require hongweipeng/think-middleware-throttle
+composer require topthink/think-throttle
 ```
 安装后会自动注册一个全局中间件，并为项目生成 `conf/throttle.php` 配置文件，默认配置不会限制访问频率。
 ### 配置说明
