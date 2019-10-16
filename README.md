@@ -1,8 +1,17 @@
-## 安装
+### 安装
 ```
 composer require topthink/think-throttle
 ```
-安装后会自动注册一个全局中间件，并为项目生成 `conf/throttle.php` 配置文件，默认配置不会限制访问频率。
+安装后会自动为项目生成 `conf/throttle.php` 配置文件，默认配置不会限制访问频率。
+
+### 开启
+组件以中间件的方式进行工作，因此它的开启与其他中间件一样，例如在全局中间件中使用 `app/middleware.php` :
+```
+<?php
+return [
+    \think\middleware\Throttle::class,
+];
+```
 ### 配置说明
 在 `config/throttle.php` 配置选项:
 ```
@@ -25,25 +34,26 @@ return [
 `key` 用来设置缓存键的；`visit_rate` 用来设置访问频率，单位可以是秒，分，时，天，例如：`1/s`, `10/m`, `98/h`, `100/d` 。
 
 ### 灵活定制
-若想要针对用户个体做限制，那么 `key` 项可以设置为回调函数，该回调返回新的缓存键值，例如：
+示例一：若想要针对用户个体做限制，那么 `key` 项可以设置为回调函数，该回调返回新的缓存键值，例如：
 ```
 'key' => function($throttle, $request) {
     $user_id = $request->session->get('user_id');
     return $user_id ;
 },
 ```
-您也可以在回调函数里针对不同控制器和方法定制生成key:
+实例二：您也可以在回调函数里针对不同控制器和方法定制生成key:
 ```
 'key' => function($throttle, $request) {
-    return '__CONTROLLER__/__ACTION__';
+    return '__CONTROLLER__/__ACTION__/__IP__';
 },
 ```
 或者直接设置:
 ```
-'key' => '__CONTROLLER__/__ACTION__',
+'key' => '__CONTROLLER__/__ACTION__/__IP__',
 ```
+PS：此示例需要本中间件在路由中间件后启用，这样预设的替换功能才会生效。
 
-也允许在闭包内修改本次访问频率如：
+示例三：允许在闭包内修改本次访问频率：
 ```
 'key' => function($throttle, $request) {
     $throttle->setRate('5/m');

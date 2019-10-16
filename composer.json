@@ -19,9 +19,6 @@
     },
     "extra": {
         "think":{
-            "services":[
-                "think\\middleware\\ThrottleService"
-            ],
             "config":{
                 "throttle": "src/config.php"
             }
