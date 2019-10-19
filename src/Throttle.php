@@ -28,6 +28,8 @@ class Throttle
      * @var array
      */
     protected $config = [
+        // 缓存键前缀，防止键值与其他应用冲突
+        'prefix' => 'throttle_',
         // 节流规则 true为自动规则
         'key'    => true,
         // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
@@ -85,7 +87,7 @@ class Throttle
             $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
         }
 
-        return md5($key);
+        return md5($this->config['prefix'] . $key);
     }
 
     /**
