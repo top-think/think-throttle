@@ -98,8 +98,8 @@ class Throttle
     protected function parseRate($rate)
     {
         list($num, $period) = explode("/", $rate);
-        $num_requests = intval($num);
-        $duration = $this->duration[$period] ?? intval($period);
+        $num_requests = (int) $num;
+        $duration = $this->duration[$period] ?? (int) $period;
         return [$num_requests, $duration];
     }
 
