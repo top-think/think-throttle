@@ -33,11 +33,13 @@ class Throttle extends BaseThrottle
      */
     protected function wait($history, $now, $duration)
     {
-        $wait_seconds = $history ? $duration - ($now - $history[0]) : $duration;
-        if ($wait_seconds < 0) {
-            $wait_seconds = 0;
+        if ($history) {
+            $wait_seconds = $history ? $duration - ($now - $history[0]) : $duration;
+            if ($wait_seconds < 0) {
+                $wait_seconds = 0;
+            }
+            $this->wait_seconds = $wait_seconds;
         }
-        $this->wait_seconds = $wait_seconds;
     }
 
     /**
