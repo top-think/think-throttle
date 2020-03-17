@@ -7,6 +7,7 @@ namespace think\middleware;
 use think\Cache;
 use think\Config;
 use think\exception\HttpResponseException;
+use think\Request;
 use think\Response;
 
 abstract class BaseThrottle
@@ -46,6 +47,33 @@ abstract class BaseThrottle
     {
         $this->cache  = $cache;
         $this->config = array_merge(static::$default_config, $config->get('throttle', []));
+    }
+
+    /**
+     * 生成缓存的 key
+     * @param Request $request
+     * @return null|string
+     */
+    protected function getCacheKey($request)
+    {
+        $key = $this->config['key'];
+
+        if ($key instanceof \Closure) {
+            $key = call_user_func($key, $this, $request);
+        }
+
+        if (null === $key || false === $key || null === $this->config['visit_rate']) {
+            // 关闭当前限制
+            return;
+        }
+
+        if (true === $key) {
+            $key = $request->ip();
+        } elseif (false !== strpos($key, '__')) {
+            $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
+        }
+
+        return md5($this->config['prefix'] . $key);
     }
 
     /**

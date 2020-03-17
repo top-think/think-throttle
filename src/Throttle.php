@@ -23,33 +23,6 @@ class Throttle extends BaseThrottle
     protected $num_requests = 0;    // 规定时间内允许的最大请求次数
     protected $expire = 0;          // 规定时间
     protected $remaining = 0;       // 规定时间内还能请求的次数
-    
-    /**
-     * 生成缓存的 key
-     * @param Request $request
-     * @return null|string
-     */
-    protected function getCacheKey($request)
-    {
-        $key = $this->config['key'];
-
-        if ($key instanceof \Closure) {
-            $key = call_user_func($key, $this, $request);
-        }
-
-        if (null === $key || false === $key || null === $this->config['visit_rate']) {
-            // 关闭当前限制
-            return;
-        }
-
-        if (true === $key) {
-            $key = $request->ip();
-        } elseif (false !== strpos($key, '__')) {
-            $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
-        }
-
-        return md5($this->config['prefix'] . $key);
-    }
 
     /**
      * 计算距离下次合法请求还有多少秒
