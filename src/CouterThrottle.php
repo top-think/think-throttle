@@ -34,13 +34,14 @@ class CouterThrottle extends BaseThrottle
         }
         list($num_requests, $duration) = $this->parseRate($this->config['visit_rate']);
         $now = time();
-        $key .= floor($now / $duration);
 
         $cur_requests = $this->cache->get($key, null);
+        $limit_flag = $this->cache->get($key . 'flag', null);
 
-        if ($cur_requests === null) {
+        if ($cur_requests === null || $limit_flag === null) {
             $cur_requests = 1;
             $this->cache->set($key, $cur_requests, $duration);
+            $this->cache->set($key . 'flag', 1, $duration);
         }
 
         if ($cur_requests <= $num_requests) {   // 允许访问
