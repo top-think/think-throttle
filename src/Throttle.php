@@ -15,59 +15,16 @@ use think\Response;
  * Class Throttle
  * @package think\middleware
  */
-class Throttle
+class Throttle extends BaseThrottle
 {
-    /**
-     * 缓存对象
-     * @var Cache
-     */
-    protected $cache;
-
-    /**
-     * 配置参数
-     * @var array
-     */
-    protected $config = [];
-
     protected $wait_seconds = 0;
-
-    /**
-     * 默认配置参数
-     * @var array
-     */
-    public static $default_config = [
-        // 缓存键前缀，防止键值与其他应用冲突
-        'prefix' => 'throttle_',
-        // 节流规则 true为自动规则
-        'key'    => true,
-        // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
-        'visit_rate' => null,
-        // 访问受限时返回的http状态码
-        'visit_fail_code' => 429,
-        // 访问受限时访问的文本信息
-        'visit_fail_text' => 'Too Many Requests',
-    ];
-
-    public static $duration = [
-        's' => 1,
-        'm' => 60,
-        'h' => 3600,
-        'd' => 86400,
-    ];
-
     protected $need_save = false;
     protected $history = [];
     protected $key = '';
     protected $now = 0;
     protected $num_requests = 0;
     protected $expire = 0;
-
-    public function __construct(Cache $cache, Config $config)
-    {
-        $this->cache  = $cache;
-        $this->config = array_merge(static::$default_config, $config->get('throttle', []));
-    }
-
+    
     /**
      * 生成缓存的 key
      * @param Request $request
@@ -93,19 +50,6 @@ class Throttle
         }
 
         return md5($this->config['prefix'] . $key);
-    }
-
-    /**
-     * 解析频率配置项
-     * @param $rate
-     * @return array
-     */
-    protected function parseRate($rate)
-    {
-        list($num, $period) = explode("/", $rate);
-        $num_requests = (int) $num;
-        $duration = static::$duration[$period] ?? (int) $period;
-        return [$num_requests, $duration];
     }
 
     /**
@@ -190,17 +134,6 @@ class Throttle
             ]);
         }
         return $response;
-    }
-
-    public function setRate($rate)
-    {
-        $this->config['visit_rate'] = $rate;
-        return $this;
-    }
-
-    public function setCache($cache) {
-        $this->cache = $cache;
-        return $this;
     }
 
 }
