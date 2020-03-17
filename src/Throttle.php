@@ -18,13 +18,11 @@ use think\Response;
  */
 class Throttle extends BaseThrottle
 {
-    protected $wait_seconds = 0;
-    protected $need_save = false;
-    protected $history = [];
-    protected $key = '';
-    protected $now = 0;
-    protected $num_requests = 0;
-    protected $expire = 0;
+    protected $wait_seconds = 0;    // 下次合法请求还有多少秒
+    protected $now = 0;             // 当前时间戳
+    protected $num_requests = 0;    // 规定时间内允许的最大请求次数
+    protected $expire = 0;          // 规定时间
+    protected $remaining = 0;       // 规定时间内还能请求的次数
     
     /**
      * 生成缓存的 key
@@ -91,12 +89,12 @@ class Throttle extends BaseThrottle
 
         if (count($history) < $num_requests) {
             // 允许访问
-            $this->need_save = true;
-            $this->key = $key;
+            $history[] = $now;
+            $this->cache->set($key, $history, $duration);
             $this->now = $now;
-            $this->history = $history;
             $this->expire = $duration;
             $this->num_requests = $num_requests;
+            $this->remaining = $num_requests - count($history);
             return true;
         }
 
@@ -118,15 +116,11 @@ class Throttle extends BaseThrottle
             throw $this->buildLimitException($this->wait_seconds);
         }
         $response = $next($request);
-        if ($this->need_save && 200 == $response->getCode()) {
-            $this->history[] = $this->now;
-            $this->cache->set($this->key, $this->history, $this->expire);
-
+        if (200 == $response->getCode()) {
             // 将速率限制 headers 添加到响应中
-            $remaining = $this->num_requests - count($this->history);
             $response->header([
                 'X-Rate-Limit-Limit' => $this->num_requests,
-                'X-Rate-Limit-Remaining' => $remaining < 0 ? 0: $remaining,
+                'X-Rate-Limit-Remaining' => $this->remaining < 0 ? 0 : $this->remaining,
                 'X-Rate-Limit-Reset' => $this->now + $this->expire,
             ]);
         }
