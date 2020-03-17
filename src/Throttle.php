@@ -7,6 +7,7 @@ namespace think\middleware;
 use Closure;
 use think\Cache;
 use think\Config;
+use think\exception\HttpResponseException;
 use think\Request;
 use think\Response;
 
@@ -118,7 +119,7 @@ class Throttle extends BaseThrottle
             $content = str_replace('__WAIT__', $this->wait_seconds, $this->config['visit_fail_text']);
             $response = Response::create($content)->code($code);
             $response->header(['Retry-After' => $this->wait_seconds]);
-            return $response;
+            throw new HttpResponseException($response);
         }
         $response = $next($request);
         if ($this->need_save && 200 == $response->getCode()) {
