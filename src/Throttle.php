@@ -27,7 +27,15 @@ class Throttle
      * 配置参数
      * @var array
      */
-    protected $config = [
+    protected $config = [];
+
+    protected $wait_seconds = 0;
+
+    /**
+     * 默认配置参数
+     * @var array
+     */
+    public static $default_config = [
         // 缓存键前缀，防止键值与其他应用冲突
         'prefix' => 'throttle_',
         // 节流规则 true为自动规则
@@ -38,12 +46,9 @@ class Throttle
         'visit_fail_code' => 429,
         // 访问受限时访问的文本信息
         'visit_fail_text' => 'Too Many Requests',
-
     ];
 
-    protected $wait_seconds = 0;
-
-    protected $duration = [
+    public static $duration = [
         's' => 1,
         'm' => 60,
         'h' => 3600,
@@ -60,7 +65,7 @@ class Throttle
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
-        $this->config = array_merge($this->config, $config->get('throttle', []));
+        $this->config = array_merge(static::$default_config, $config->get('throttle', []));
     }
 
     /**
@@ -99,7 +104,7 @@ class Throttle
     {
         list($num, $period) = explode("/", $rate);
         $num_requests = (int) $num;
-        $duration = $this->duration[$period] ?? (int) $period;
+        $duration = static::$duration[$period] ?? (int) $period;
         return [$num_requests, $duration];
     }
 
