@@ -18,7 +18,7 @@ return [
 <?php
 // 中间件配置
 return [
-    // 缓存的键值，默认true使用来源ip
+    // 缓存的键，true 表示使用来源ip
     'key' => true,
     // 设置访问频率，此处指的是允许每分钟请求10次。默认值 null 表示不限制
     'visit_rate' => '10/m',
