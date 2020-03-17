@@ -10,7 +10,7 @@ use think\Request;
 use think\Response;
 
 /**
- * 访问频率限制，采用计数器方式
+ * 访问频率限制，采用计数器固定窗口算法
  * Class CouterThrottle
  */
 class CouterThrottle extends BaseThrottle

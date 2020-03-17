@@ -12,7 +12,7 @@ use think\Request;
 use think\Response;
 
 /**
- * 访问频率限制，采用滑动窗口
+ * 访问频率限制，计数器滑动窗口算法
  * Class Throttle
  * @package think\middleware
  */
