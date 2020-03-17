@@ -195,10 +195,12 @@ class Throttle
     public function setRate($rate)
     {
         $this->config['visit_rate'] = $rate;
+        return $this;
     }
 
     public function setCache($cache) {
         $this->cache = $cache;
+        return $this;
     }
 
 }
