@@ -12,7 +12,7 @@ use think\Request;
 use think\Response;
 
 /**
- * 访问频率限制
+ * 访问频率限制，采用滑动窗口
  * Class Throttle
  * @package think\middleware
  */
@@ -115,11 +115,7 @@ class Throttle extends BaseThrottle
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
-            $code = $this->config['visit_fail_code'];
-            $content = str_replace('__WAIT__', $this->wait_seconds, $this->config['visit_fail_text']);
-            $response = Response::create($content)->code($code);
-            $response->header(['Retry-After' => $this->wait_seconds]);
-            throw new HttpResponseException($response);
+            throw $this->buildLimitException($this->wait_seconds);
         }
         $response = $next($request);
         if ($this->need_save && 200 == $response->getCode()) {

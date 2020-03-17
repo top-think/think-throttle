@@ -6,6 +6,8 @@ namespace think\middleware;
 
 use think\Cache;
 use think\Config;
+use think\exception\HttpResponseException;
+use think\Response;
 
 abstract class BaseThrottle
 {
@@ -79,6 +81,19 @@ abstract class BaseThrottle
     {
         $this->cache = $cache;
         return $this;
+    }
+
+    /**
+     * 构建 Response Exception
+     * @param $content
+     * @param $wait_seconds
+     * @return HttpResponseException
+     */
+    public function buildLimitException($wait_seconds) {
+        $content = str_replace('__WAIT__', $this->wait_seconds, $this->config['visit_fail_text']);
+        $response = Response::create($content)->code($this->config['visit_fail_code']);
+        $response->header(['Retry-After' => $wait_seconds]);
+        return new HttpResponseException($response);
     }
 
 }
