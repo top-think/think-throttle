@@ -7,6 +7,7 @@ namespace think\middleware;
 use Closure;
 use think\Cache;
 use think\Config;
+use think\Container;
 use think\exception\HttpResponseException;
 use think\middleware\throttle\CounterFixed;
 use think\middleware\throttle\CouterSlider;
@@ -14,7 +15,7 @@ use think\Request;
 use think\Response;
 
 /**
- * 访问频率限制
+ * 访问频率限制中间件
  * Class Throttle
  * @package think\middleware
  */
@@ -30,6 +31,7 @@ class Throttle
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
         'visit_fail_code' => 429,                   // 访问受限时返回的http状态码
         'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息
+        'driver_class' => CounterFixed::class,
     ];
 
     public static $duration = [
@@ -63,7 +65,7 @@ class Throttle
     {
         $this->cache  = $cache;
         $this->config = array_merge(static::$default_config, $config->get('throttle', []));
-        $this->throttle = new CounterFixed();
+        $this->throttle = Container::getInstance()->invokeClass($this->config['driver_class']);
     }
 
     /**
@@ -132,7 +134,7 @@ class Throttle
         $key = $this->config['key'];
 
         if ($key instanceof \Closure) {
-            $key = call_user_func($key, $this, $request);
+            $key = Container::getInstance()->invoke($key, [$this, $request]);
         }
 
         if (null === $key || false === $key || null === $this->config['visit_rate']) {
@@ -182,6 +184,14 @@ class Throttle
     {
         $this->cache = $cache;
         return $this;
+    }
+
+    /**
+     * 设置限流算法类
+     * @param $class_name
+     */
+    public function setThrottleClass($class_name) {
+        $this->throttle = Container::getInstance()->invokeClass($class_name);
     }
 
     /**
