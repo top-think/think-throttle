@@ -8,7 +8,7 @@ namespace think\middleware\throttle;
  * Class CouterSlider
  * @package think\middleware\throttle
  */
-class CouterSlider extends ThrottleAbstract
+class CounterSlider extends ThrottleAbstract
 {
     public function allowRequest(string $key, int $now, int $max_requests, int $duration, $cache)
     {

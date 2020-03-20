@@ -10,7 +10,7 @@ use think\Config;
 use think\Container;
 use think\exception\HttpResponseException;
 use think\middleware\throttle\CounterFixed;
-use think\middleware\throttle\CouterSlider;
+use think\middleware\throttle\CounterSlider;
 use think\Request;
 use think\Response;
 
