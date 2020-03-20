@@ -28,7 +28,7 @@ class CounterSlider extends ThrottleAbstract
         }
 
         if ($history) {
-            $wait_seconds = $duration - ($now - $history[0]);
+            $wait_seconds = $duration - ($now - $history[0]) + 1;
             $this->wait_seconds = $wait_seconds > 0 ? $wait_seconds : 0;
         }
 
