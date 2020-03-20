@@ -192,6 +192,7 @@ class Throttle
      */
     public function setThrottleClass($class_name) {
         $this->throttle = Container::getInstance()->invokeClass($class_name);
+        return $this;
     }
 
     /**
