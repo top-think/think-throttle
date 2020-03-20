@@ -59,13 +59,13 @@ class Throttle
     protected $max_requests = 0;    // 规定时间内允许的最大请求次数
     protected $expire = 0;          // 规定时间
     protected $remaining = 0;       // 规定时间内还能请求的次数
-    protected $throttle = null;
+    protected $driver_class = null;
 
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
         $this->config = array_merge(static::$default_config, $config->get('throttle', []));
-        $this->throttle = Container::getInstance()->invokeClass($this->config['driver_class']);
+        $this->driver_class = Container::getInstance()->invokeClass($this->config['driver_class']);
     }
 
     /**
@@ -82,18 +82,18 @@ class Throttle
         list($max_requests, $duration) = $this->parseRate($this->config['visit_rate']);
 
         $now = time();
-        $allow = $this->throttle->allowRequest($key, $now, $max_requests, $duration, $this->cache);
+        $allow = $this->driver_class->allowRequest($key, $now, $max_requests, $duration, $this->cache);
 
         if ($allow) {
             // 允许访问
             $this->now = $now;
             $this->expire = $duration;
             $this->max_requests = $max_requests;
-            $this->remaining = $max_requests - $this->throttle->getCurRequests();
+            $this->remaining = $max_requests - $this->driver_class->getCurRequests();
             return true;
         }
 
-        $this->wait_seconds = $this->throttle->getWaitSeconds();
+        $this->wait_seconds = $this->driver_class->getWaitSeconds();
         return false;
     }
 
@@ -108,11 +108,11 @@ class Throttle
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
-            $this->throttle->denyRequest($this->key, $this->cache);
+            $this->driver_class->denyRequest($this->key, $this->cache);
             throw $this->buildLimitException($this->wait_seconds);
         }
         $response = $next($request);
-        $this->throttle->finishRequest($this->key, $this->cache);
+        $this->driver_class->finishRequest($this->key, $this->cache);
         if (200 == $response->getCode()) {
             // 将速率限制 headers 添加到响应中
             $response->header([
@@ -190,8 +190,8 @@ class Throttle
      * 设置限流算法类
      * @param $class_name
      */
-    public function setThrottleClass($class_name) {
-        $this->throttle = Container::getInstance()->invokeClass($class_name);
+    public function setDriverClass($class_name) {
+        $this->driver_class = Container::getInstance()->invokeClass($class_name);
         return $this;
     }
 
