@@ -202,7 +202,7 @@ class Throttle
      * @return HttpResponseException
      */
     public function buildLimitException($wait_seconds) {
-        $content = str_replace('__WAIT__', $this->wait_seconds, $this->config['visit_fail_text']);
+        $content = str_replace('__WAIT__', $wait_seconds, $this->config['visit_fail_text']);
         $response = Response::create($content)->code($this->config['visit_fail_code']);
         $response->header(['Retry-After' => $wait_seconds]);
         return new HttpResponseException($response);
