@@ -17,8 +17,8 @@ class CounterFixed extends ThrottleAbstract
         $limit_flag = $cache->get($key . 'flag', null);
         $wait_reset_seconds = $duration - $now % $duration;     // 距离下次重置还有n秒时间
 
-        $this->wait_seconds = ($wait_reset_seconds + 1) % $duration;
-        if ($limit_flag === null || $wait_reset_seconds === null) { // 首次访问
+        $this->wait_seconds = $wait_reset_seconds % $duration  + 1;
+        if ($limit_flag === null) { // 首次访问
             $cur_requests = 1;
             $cache->set($key, $cur_requests, $wait_reset_seconds);
             $cache->set($key . 'flag', 1, $wait_reset_seconds);
