@@ -31,7 +31,7 @@ class Throttle
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
         'visit_fail_code' => 429,                   // 访问受限时返回的http状态码
         'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息
-        'driver_class' => CounterFixed::class,
+        'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
 
     public static $duration = [
@@ -65,7 +65,6 @@ class Throttle
     {
         $this->cache  = $cache;
         $this->config = array_merge(static::$default_config, $config->get('throttle', []));
-        $this->driver_class = Container::getInstance()->invokeClass($this->config['driver_class']);
     }
 
     /**
@@ -83,6 +82,8 @@ class Throttle
 
         $micronow = microtime(true);
         $now = (int) $micronow;
+
+        $this->driver_class = Container::getInstance()->invokeClass($this->config['driver_name']);
         $allow = $this->driver_class->allowRequest($key, $micronow, $max_requests, $duration, $this->cache);
 
         if ($allow) {
@@ -149,7 +150,7 @@ class Throttle
             $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
         }
 
-        return md5($this->config['prefix'] . $key);
+        return md5($this->config['prefix'] . $key . $this->config['driver_name']);
     }
 
     /**
@@ -192,7 +193,7 @@ class Throttle
      * @param $class_name
      */
     public function setDriverClass($class_name) {
-        $this->driver_class = Container::getInstance()->invokeClass($class_name);
+        $this->config['driver_name'] = $class_name;
         return $this;
     }
 
