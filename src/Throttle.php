@@ -81,8 +81,9 @@ class Throttle
         }
         list($max_requests, $duration) = $this->parseRate($this->config['visit_rate']);
 
-        $now = time();
-        $allow = $this->driver_class->allowRequest($key, $now, $max_requests, $duration, $this->cache);
+        $micronow = microtime(true);
+        $now = (int) $micronow;
+        $allow = $this->driver_class->allowRequest($key, $micronow, $max_requests, $duration, $this->cache);
 
         if ($allow) {
             // 允许访问

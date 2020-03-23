@@ -11,10 +11,11 @@ namespace think\middleware\throttle;
 class CounterFixed extends ThrottleAbstract
 {
 
-    public function allowRequest(string $key, int $now, int $max_requests, int $duration, $cache)
+    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, $cache)
     {
         $cur_requests = $cache->get($key, 0);
         $limit_flag = $cache->get($key . 'flag', null);
+        $now = (int) $micronow;
         $wait_reset_seconds = $duration - $now % $duration;     // 距离下次重置还有n秒时间
 
         $this->wait_seconds = $wait_reset_seconds % $duration  + 1;

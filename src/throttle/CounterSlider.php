@@ -10,10 +10,10 @@ namespace think\middleware\throttle;
  */
 class CounterSlider extends ThrottleAbstract
 {
-    public function allowRequest(string $key, int $now, int $max_requests, int $duration, $cache)
+    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, $cache)
     {
         $history = $cache->get($key, []);
-
+        $now = (int) $micronow;
         // 移除过期的请求的记录
         $history = array_values(array_filter($history, function ($val) use ($now, $duration) {
             return $val >= $now - $duration;
