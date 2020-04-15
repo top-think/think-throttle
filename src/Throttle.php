@@ -136,15 +136,15 @@ class Throttle
         $key = $this->config['key'];
 
         if ($key instanceof \Closure) {
-            $key = Container::getInstance()->invoke($key, [$this, $request]);
+            $key = Container::getInstance()->invokeFunction($key, [$this, $request]);
         }
 
-        if (null === $key || false === $key || null === $this->config['visit_rate']) {
+        if ($key === null || $key === false || $this->config['visit_rate'] === null) {
             // 关闭当前限制
             return;
         }
 
-        if (true === $key) {
+        if ($key === true) {
             $key = $request->ip();
         } elseif (false !== strpos($key, '__')) {
             $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
