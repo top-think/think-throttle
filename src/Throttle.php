@@ -110,11 +110,9 @@ class Throttle
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
-            $this->driver_class->denyRequest($this->key, $this->cache);
             throw $this->buildLimitException($this->wait_seconds);
         }
         $response = $next($request);
-        $this->driver_class->finishRequest($this->key, $this->cache);
         if (200 == $response->getCode()) {
             // 将速率限制 headers 添加到响应中
             $response->header([

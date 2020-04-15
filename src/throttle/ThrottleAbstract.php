@@ -36,14 +36,4 @@ abstract class ThrottleAbstract
         return $this->cur_requests;
     }
 
-    /**
-     * 完成请求时的回调
-     */
-    public function finishRequest($key, $cache) {}
-
-    /**
-     * 拒绝请求时回调
-     */
-    public function denyRequest($key, $cache) {}
-
 }
