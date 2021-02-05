@@ -28,6 +28,7 @@ class Throttle
     public static $default_config = [
         'prefix' => 'throttle_',                    // 缓存键前缀，防止键与其他应用冲突
         'key'    => true,                           // 节流规则 true为自动规则
+        'visit_method' => ['GET', 'HEAD'],          // 要被限制的请求类型
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
         'visit_fail_code' => 429,                   // 访问受限时返回的http状态码
         'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息
@@ -69,11 +70,16 @@ class Throttle
 
     /**
      * 请求是否允许
-     * @param $request
+     * @param Request $request
      * @return bool
      */
     protected function allowRequest($request)
     {
+        // 若请求类型不在限制内
+        if (!in_array($request->method(), $this->config['visit_method'])) {
+            return true;
+        }
+
         $key = $this->getCacheKey($request);
         if (null === $key) {
             return true;
