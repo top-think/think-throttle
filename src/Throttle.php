@@ -10,10 +10,10 @@ use think\Config;
 use think\Container;
 use think\exception\HttpResponseException;
 use think\middleware\throttle\CounterFixed;
-use think\middleware\throttle\CounterSlider;
 use think\middleware\throttle\ThrottleAbstract;
 use think\Request;
 use think\Response;
+use function sprintf;
 
 /**
  * 访问频率限制中间件
@@ -33,6 +33,7 @@ class Throttle
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
         'visit_fail_code' => 429,                   // 访问受限时返回的http状态码
         'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息
+        'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
 
@@ -94,6 +95,9 @@ class Throttle
         $now = (int) $micronow;
 
         $this->driver_class = Container::getInstance()->invokeClass($this->config['driver_name']);
+        if (!$this->driver_class instanceof ThrottleAbstract) {
+            throw new \TypeError('The throttle driver must extends ' . ThrottleAbstract::class);
+        }
         $allow = $this->driver_class->allowRequest($key, $micronow, $max_requests, $duration, $this->cache);
 
         if ($allow) {
@@ -120,7 +124,7 @@ class Throttle
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
-            throw $this->buildLimitException($this->wait_seconds);
+            throw $this->buildLimitException($this->wait_seconds, $request);
         }
         $response = $next($request);
         if (200 == $response->getCode()) {
@@ -149,7 +153,7 @@ class Throttle
 
         if ($key === null || $key === false || $this->config['visit_rate'] === null) {
             // 关闭当前限制
-            return;
+            return null;
         }
 
         if ($key === true) {
@@ -207,13 +211,21 @@ class Throttle
 
     /**
      * 构建 Response Exception
-     * @param $content
-     * @param $wait_seconds
+     * @param int     $wait_seconds
+     * @param Request $request
      * @return HttpResponseException
      */
-    public function buildLimitException($wait_seconds) {
-        $content = str_replace('__WAIT__', $wait_seconds, $this->config['visit_fail_text']);
-        $response = Response::create($content)->code($this->config['visit_fail_code']);
+    public function buildLimitException($wait_seconds, Request $request) {
+        $visitFail = $this->config['visit_fail_response'] ?? null;
+        if ($visitFail instanceof \Closure) {
+            $response = Container::getInstance()->invokeFunction($visitFail, [$this, $request, $wait_seconds]);
+            if (!$response instanceof Response) {
+                throw new \TypeError(sprintf('The closure must return %s instance', Response::class));
+            }
+        } else {
+            $content = str_replace('__WAIT__', (string) $wait_seconds, $this->config['visit_fail_text']);
+            $response = Response::create($content)->code($this->config['visit_fail_code']);
+        }
         $response->header(['Retry-After' => $wait_seconds]);
         return new HttpResponseException($response);
     }
