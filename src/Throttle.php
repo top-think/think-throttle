@@ -11,6 +11,7 @@ use think\Container;
 use think\exception\HttpResponseException;
 use think\middleware\throttle\CounterFixed;
 use think\middleware\throttle\CounterSlider;
+use think\middleware\throttle\ThrottleAbstract;
 use think\Request;
 use think\Response;
 
@@ -60,6 +61,9 @@ class Throttle
     protected $max_requests = 0;    // 规定时间内允许的最大请求次数
     protected $expire = 0;          // 规定时间
     protected $remaining = 0;       // 规定时间内还能请求的次数
+    /**
+     * @var ThrottleAbstract
+     */
     protected $driver_class = null;
 
     public function __construct(Cache $cache, Config $config)
@@ -84,7 +88,7 @@ class Throttle
         if (null === $key) {
             return true;
         }
-        list($max_requests, $duration) = $this->parseRate($this->config['visit_rate']);
+        [$max_requests, $duration] = $this->parseRate($this->config['visit_rate']);
 
         $micronow = microtime(true);
         $now = (int) $micronow;
@@ -164,7 +168,7 @@ class Throttle
      */
     protected function parseRate($rate)
     {
-        list($num, $period) = explode("/", $rate);
+        [$num, $period] = explode("/", $rate);
         $max_requests = (int) $num;
         $duration = static::$duration[$period] ?? (int) $period;
         return [$max_requests, $duration];
