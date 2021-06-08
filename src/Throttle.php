@@ -5,6 +5,7 @@ declare (strict_types = 1);
 namespace think\middleware;
 
 use Closure;
+use Psr\SimpleCache\CacheInterface;
 use think\Cache;
 use think\Config;
 use think\Container;
@@ -46,7 +47,7 @@ class Throttle
 
     /**
      * 缓存对象
-     * @var Cache
+     * @var CacheInterface
      */
     protected $cache;
 
@@ -63,10 +64,15 @@ class Throttle
     protected $expire = 0;          // 规定时间
     protected $remaining = 0;       // 规定时间内还能请求的次数
     /**
-     * @var ThrottleAbstract
+     * @var ThrottleAbstract|null
      */
     protected $driver_class = null;
 
+    /**
+     * Throttle constructor.
+     * @param Cache  $cache
+     * @param Config $config
+     */
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
@@ -167,8 +173,8 @@ class Throttle
 
     /**
      * 解析频率配置项
-     * @param $rate
-     * @return array
+     * @param string $rate
+     * @return int[]
      */
     protected function parseRate($rate)
     {
@@ -180,7 +186,7 @@ class Throttle
 
     /**
      * 设置速率
-     * @param $rate string '10/m'  '20/300'
+     * @param string $rate '10/m'  '20/300'
      * @return $this
      */
     public function setRate($rate)
@@ -191,7 +197,7 @@ class Throttle
 
     /**
      * 设置缓存驱动
-     * @param $cache
+     * @param CacheInterface $cache
      * @return $this
      */
     public function setCache($cache)
@@ -202,7 +208,8 @@ class Throttle
 
     /**
      * 设置限流算法类
-     * @param $class_name
+     * @param string $class_name
+     * @return $this
      */
     public function setDriverClass($class_name) {
         $this->config['driver_name'] = $class_name;
