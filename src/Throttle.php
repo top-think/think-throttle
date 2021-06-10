@@ -133,13 +133,9 @@ class Throttle
             throw $this->buildLimitException($this->wait_seconds, $request);
         }
         $response = $next($request);
-        if (200 == $response->getCode()) {
+        if (200 <= $response->getCode() && 300 > $response->getCode()) {
             // 将速率限制 headers 添加到响应中
-            $response->header([
-                'X-Rate-Limit-Limit' => $this->max_requests,
-                'X-Rate-Limit-Remaining' => $this->remaining < 0 ? 0 : $this->remaining,
-                'X-Rate-Limit-Reset' => $this->now + $this->expire,
-            ]);
+            $response->header($this->getRateLimitHeaders());
         }
         return $response;
     }
@@ -214,6 +210,19 @@ class Throttle
     public function setDriverClass($class_name) {
         $this->config['driver_name'] = $class_name;
         return $this;
+    }
+
+    /**
+     * 获取速率限制头
+     * @return array
+     */
+    public function getRateLimitHeaders(): array
+    {
+        return [
+            'X-Rate-Limit-Limit' => $this->max_requests,
+            'X-Rate-Limit-Remaining' => $this->remaining < 0 ? 0 : $this->remaining,
+            'X-Rate-Limit-Reset' => $this->now + $this->expire,
+        ];
     }
 
     /**
