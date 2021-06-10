@@ -3,6 +3,8 @@
 
 namespace think\middleware\throttle;
 
+use Psr\SimpleCache\CacheInterface;
+
 /**
  * 漏桶算法
  * Class LeakyBucket
@@ -11,7 +13,7 @@ namespace think\middleware\throttle;
 class LeakyBucket extends ThrottleAbstract
 {
 
-    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, $cache)
+    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, CacheInterface $cache): bool
     {
         if ($max_requests <= 0) return false;
 
