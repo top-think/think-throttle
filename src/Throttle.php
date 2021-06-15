@@ -32,6 +32,7 @@ class Throttle
         'key'    => true,                           // 节流规则 true为自动规则
         'visit_method' => ['GET', 'HEAD'],          // 要被限制的请求类型
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
+        'visit_enable_show_rate_limit' => true,     // 在响应体中设置速率限制的头部信息
         'visit_fail_code' => 429,                   // 访问受限时返回的http状态码，当没有visit_fail_response时生效
         'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息，当没有visit_fail_response时生效
         'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
@@ -133,7 +134,7 @@ class Throttle
             throw $this->buildLimitException($this->wait_seconds, $request);
         }
         $response = $next($request);
-        if (200 <= $response->getCode() && 300 > $response->getCode()) {
+        if (200 <= $response->getCode() && 300 > $response->getCode() && $this->config['visit_enable_show_rate_limit']) {
             // 将速率限制 headers 添加到响应中
             $response->header($this->getRateLimitHeaders());
         }
@@ -243,7 +244,9 @@ class Throttle
             $content = str_replace('__WAIT__', (string) $wait_seconds, $this->config['visit_fail_text']);
             $response = Response::create($content)->code($this->config['visit_fail_code']);
         }
-        $response->header(['Retry-After' => $wait_seconds]);
+        if ($this->config['visit_enable_show_rate_limit']) {
+            $response->header(['Retry-After' => $wait_seconds]);
+        }
         return new HttpResponseException($response);
     }
 
