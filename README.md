@@ -26,10 +26,10 @@ return [
     'visit_method' => ['GET'],
     // 设置访问频率，例如 '10/m' 指的是允许每分钟请求10次。值 null 表示不限制， eg: null 10/m  20/h  300/d 200/300
     'visit_rate' => '100/m',
-    // 访问受限时返回的http状态码
-    'visit_fail_code' => 429,
-    // 访问受限时访问的文本信息
-    'visit_fail_text' => '访问频率受到限制，请稍等__WAIT__秒再试',
+    // 访问受限时返回的响应
+    'visit_fail_response' => function (Throttle $throttle, Request $request, int $wait_seconds) {
+        return Response::create('Too many requests, try again after ' . $wait_seconds . ' seconds.')->code(429);
+    },
 ];
 ```
 
@@ -73,7 +73,10 @@ PS：此示例需要本中间件在路由中间件后启用，这样预设的替
 Route::group(function() {
     //路由注册
 
-})->middleware(\think\middleware\Throttle::class, ['visit_rate' => '20/m' ]);
+})->middleware(\think\middleware\Throttle::class, [
+    'visit_rate' => '20/m',
+    'key' => '__CONTROLLER__/__ACTION__/__IP__',
+]);
 ```
 
 ## 更新日志
