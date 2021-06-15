@@ -68,6 +68,14 @@ PS：此示例需要本中间件在路由中间件后启用，这样预设的替
 },
 ```
 
+示例四：允许在路由定义中独立配置(1.3.x 版本支持)
+```
+Route::group(function() {
+    //路由注册
+
+})->middleware(\think\middleware\Throttle::class, ['visit_rate' => '20/m' ]);
+```
+
 ## 更新日志
 版本 1.2.x 的配置形式完全兼容版本 1.1.x 内容，可以无缝升级。
 
