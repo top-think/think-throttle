@@ -124,10 +124,15 @@ class Throttle
      * 处理限制访问
      * @param Request $request
      * @param Closure $next
+     * @param array $params
      * @return Response
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, array $params=[]): Response
     {
+        if ($params) {
+            $this->config = array_merge($this->config, $params);
+        }
+
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
