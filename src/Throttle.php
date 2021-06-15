@@ -84,7 +84,7 @@ class Throttle
      * @param Request $request
      * @return bool
      */
-    protected function allowRequest($request)
+    protected function allowRequest(Request $request): bool
     {
         // 若请求类型不在限制内
         if (!in_array($request->method(), $this->config['visit_method'])) {
@@ -125,7 +125,7 @@ class Throttle
      * @param Closure $next
      * @return Response
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         $allow = $this->allowRequest($request);
         if (!$allow) {
@@ -145,7 +145,7 @@ class Throttle
      * @param Request $request
      * @return null|string
      */
-    protected function getCacheKey($request)
+    protected function getCacheKey(Request $request): ?string
     {
         $key = $this->config['key'];
 
@@ -172,7 +172,7 @@ class Throttle
      * @param string $rate
      * @return int[]
      */
-    protected function parseRate($rate)
+    protected function parseRate($rate): array
     {
         [$num, $period] = explode("/", $rate);
         $max_requests = (int) $num;
@@ -185,7 +185,7 @@ class Throttle
      * @param string $rate '10/m'  '20/300'
      * @return $this
      */
-    public function setRate($rate)
+    public function setRate(string $rate): self
     {
         $this->config['visit_rate'] = $rate;
         return $this;
@@ -196,7 +196,7 @@ class Throttle
      * @param CacheInterface $cache
      * @return $this
      */
-    public function setCache($cache)
+    public function setCache(CacheInterface $cache): self
     {
         $this->cache = $cache;
         return $this;
@@ -207,7 +207,8 @@ class Throttle
      * @param string $class_name
      * @return $this
      */
-    public function setDriverClass($class_name) {
+    public function setDriverClass(string $class_name): self
+    {
         $this->config['driver_name'] = $class_name;
         return $this;
     }
@@ -231,7 +232,7 @@ class Throttle
      * @param Request $request
      * @return HttpResponseException
      */
-    public function buildLimitException($wait_seconds, Request $request) {
+    public function buildLimitException(int $wait_seconds, Request $request): HttpResponseException {
         $visitFail = $this->config['visit_fail_response'] ?? null;
         if ($visitFail instanceof \Closure) {
             $response = Container::getInstance()->invokeFunction($visitFail, [$this, $request, $wait_seconds]);
