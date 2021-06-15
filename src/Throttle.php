@@ -32,8 +32,8 @@ class Throttle
         'key'    => true,                           // 节流规则 true为自动规则
         'visit_method' => ['GET', 'HEAD'],          // 要被限制的请求类型
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
-        'visit_fail_code' => 429,                   // 访问受限时返回的http状态码
-        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息
+        'visit_fail_code' => 429,                   // 访问受限时返回的http状态码，当没有visit_fail_response时生效
+        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息，当没有visit_fail_response时生效
         'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];

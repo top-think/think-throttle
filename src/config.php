@@ -11,10 +11,8 @@ return [
     'visit_method' => ['GET', 'HEAD'],
     // 设置访问频率，例如 '10/m' 指的是允许每分钟请求10次。值 null 表示不限制， eg: null 10/m  20/h  300/d 200/300
     'visit_rate' => '100/m',
-    // 访问受限时返回的http状态码
-    'visit_fail_code' => 429,
-    // 访问受限时的响应文本信息
-    'visit_fail_text' => '访问频率受到限制，请稍等__WAIT__秒再试',
-    // 访问受限时的响应信息闭包回调（优先级高于：visit_fail_text）
-    'visit_fail_response' => null,
+    // 访问受限时返回的响应
+    'visit_fail_response' => function (Throttle $throttle, Request $request, int $wait_seconds) {
+        return Response::create('Too many requests, try again after ' . $wait_seconds . ' second.')->code(429);
+    },
 ];
