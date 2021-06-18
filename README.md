@@ -1,3 +1,6 @@
+### 作用
+通过本中间件可限定用户在一段时间内的访问次数，可用于保护接口防爬防爆破的目的。
+
 ### 安装
 ```
 composer require topthink/think-throttle
