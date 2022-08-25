@@ -30,7 +30,7 @@ abstract class ThrottleAbstract
      */
     public function getWaitSeconds(): int
     {
-        return $this->wait_seconds;
+        return (int) $this->wait_seconds;
     }
 
     /**
@@ -39,7 +39,7 @@ abstract class ThrottleAbstract
      */
     public function getCurRequests(): int
     {
-        return $this->cur_requests;
+        return (int) $this->cur_requests;
     }
 
 }
