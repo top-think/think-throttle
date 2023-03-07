@@ -1,5 +1,5 @@
 {
-    "name": "topthink/think-throttle",
+    "name": "idoithink2021/think-throttle",
     "description": "throttle middleware for thinkphp6",
     "require": {
         "php": ">=7.1.0",
