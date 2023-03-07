@@ -3,7 +3,7 @@
     "description": "throttle middleware for thinkphp6",
     "require": {
         "php": ">=7.1.0",
-        "topthink/framework": "^6.0.0"
+        "topthink/framework": "^5.1.0"
     },
     "license": "Apache-2.0",
     "authors": [
