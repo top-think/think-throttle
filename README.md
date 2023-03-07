@@ -3,7 +3,7 @@
 
 ### 安装
 ```
-composer require topthink/think-throttle
+composer require idoithink2021/think-throttle
 ```
 安装后会自动为项目生成 `conf/throttle.php` 配置文件，安装后组件不会自动启用，需要手动设置。
 
