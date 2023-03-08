@@ -5,16 +5,14 @@ declare (strict_types = 1);
 namespace think\middleware;
 
 use Closure;
-use Psr\SimpleCache\CacheInterface;
 use think\Cache;
 use think\Config;
 use think\Container;
 use think\exception\HttpResponseException;
 use think\middleware\throttle\CounterFixed;
-use think\middleware\throttle\ThrottleAbstract;
+use think\middleware\throttle\CounterSlider;
 use think\Request;
 use think\Response;
-use function sprintf;
 
 /**
  * 访问频率限制中间件
@@ -32,10 +30,8 @@ class Throttle
         'key'    => true,                           // 节流规则 true为自动规则
         'visit_method' => ['GET', 'HEAD'],          // 要被限制的请求类型
         'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
-        'visit_enable_show_rate_limit' => true,     // 在响应体中设置速率限制的头部信息
-        'visit_fail_code' => 429,                   // 访问受限时返回的http状态码，当没有visit_fail_response时生效
-        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息，当没有visit_fail_response时生效
-        'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
+        'visit_fail_code' => 429,                   // 访问受限时返回的http状态码
+        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
 
@@ -48,7 +44,7 @@ class Throttle
 
     /**
      * 缓存对象
-     * @var CacheInterface
+     * @var Cache
      */
     protected $cache;
 
@@ -64,16 +60,8 @@ class Throttle
     protected $max_requests = 0;    // 规定时间内允许的最大请求次数
     protected $expire = 0;          // 规定时间
     protected $remaining = 0;       // 规定时间内还能请求的次数
-    /**
-     * @var ThrottleAbstract|null
-     */
     protected $driver_class = null;
 
-    /**
-     * Throttle constructor.
-     * @param Cache  $cache
-     * @param Config $config
-     */
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
@@ -85,7 +73,7 @@ class Throttle
      * @param Request $request
      * @return bool
      */
-    protected function allowRequest(Request $request): bool
+    protected function allowRequest($request)
     {
         // 若请求类型不在限制内
         if (!in_array($request->method(), $this->config['visit_method'])) {
@@ -96,15 +84,12 @@ class Throttle
         if (null === $key) {
             return true;
         }
-        [$max_requests, $duration] = $this->parseRate($this->config['visit_rate']);
+        list($max_requests, $duration) = $this->parseRate($this->config['visit_rate']);
 
         $micronow = microtime(true);
         $now = (int) $micronow;
 
         $this->driver_class = Container::getInstance()->invokeClass($this->config['driver_name']);
-        if (!$this->driver_class instanceof ThrottleAbstract) {
-            throw new \TypeError('The throttle driver must extends ' . ThrottleAbstract::class);
-        }
         $allow = $this->driver_class->allowRequest($key, $micronow, $max_requests, $duration, $this->cache);
 
         if ($allow) {
@@ -124,24 +109,23 @@ class Throttle
      * 处理限制访问
      * @param Request $request
      * @param Closure $next
-     * @param array $params
      * @return Response
      */
-    public function handle(Request $request, Closure $next, array $params=[]): Response
+    public function handle($request, Closure $next)
     {
-        if ($params) {
-            $this->config = array_merge($this->config, $params);
-        }
-
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
-            throw $this->buildLimitException($this->wait_seconds, $request);
+            throw $this->buildLimitException($this->wait_seconds);
         }
         $response = $next($request);
-        if (200 <= $response->getCode() && 300 > $response->getCode() && $this->config['visit_enable_show_rate_limit']) {
+        if (200 == $response->getCode()) {
             // 将速率限制 headers 添加到响应中
-            $response->header($this->getRateLimitHeaders());
+            $response->header([
+                'X-Rate-Limit-Limit' => $this->max_requests,
+                'X-Rate-Limit-Remaining' => $this->remaining < 0 ? 0 : $this->remaining,
+                'X-Rate-Limit-Reset' => $this->now + $this->expire,
+            ]);
         }
         return $response;
     }
@@ -151,7 +135,7 @@ class Throttle
      * @param Request $request
      * @return null|string
      */
-    protected function getCacheKey(Request $request): ?string
+    protected function getCacheKey($request)
     {
         $key = $this->config['key'];
 
@@ -161,7 +145,7 @@ class Throttle
 
         if ($key === null || $key === false || $this->config['visit_rate'] === null) {
             // 关闭当前限制
-            return null;
+            return;
         }
 
         if ($key === true) {
@@ -175,12 +159,12 @@ class Throttle
 
     /**
      * 解析频率配置项
-     * @param string $rate
-     * @return int[]
+     * @param $rate
+     * @return array
      */
-    protected function parseRate($rate): array
+    protected function parseRate($rate)
     {
-        [$num, $period] = explode("/", $rate);
+        list($num, $period) = explode("/", $rate);
         $max_requests = (int) $num;
         $duration = static::$duration[$period] ?? (int) $period;
         return [$max_requests, $duration];
@@ -188,10 +172,10 @@ class Throttle
 
     /**
      * 设置速率
-     * @param string $rate '10/m'  '20/300'
+     * @param $rate string '10/m'  '20/300'
      * @return $this
      */
-    public function setRate(string $rate): self
+    public function setRate($rate)
     {
         $this->config['visit_rate'] = $rate;
         return $this;
@@ -199,10 +183,10 @@ class Throttle
 
     /**
      * 设置缓存驱动
-     * @param CacheInterface $cache
+     * @param $cache
      * @return $this
      */
-    public function setCache(CacheInterface $cache): self
+    public function setCache($cache)
     {
         $this->cache = $cache;
         return $this;
@@ -210,48 +194,23 @@ class Throttle
 
     /**
      * 设置限流算法类
-     * @param string $class_name
-     * @return $this
+     * @param $class_name
      */
-    public function setDriverClass(string $class_name): self
-    {
+    public function setDriverClass($class_name) {
         $this->config['driver_name'] = $class_name;
         return $this;
     }
 
     /**
-     * 获取速率限制头
-     * @return array
-     */
-    public function getRateLimitHeaders(): array
-    {
-        return [
-            'X-Rate-Limit-Limit' => $this->max_requests,
-            'X-Rate-Limit-Remaining' => $this->remaining < 0 ? 0 : $this->remaining,
-            'X-Rate-Limit-Reset' => $this->now + $this->expire,
-        ];
-    }
-
-    /**
      * 构建 Response Exception
-     * @param int     $wait_seconds
-     * @param Request $request
+     * @param $content
+     * @param $wait_seconds
      * @return HttpResponseException
      */
-    public function buildLimitException(int $wait_seconds, Request $request): HttpResponseException {
-        $visitFail = $this->config['visit_fail_response'] ?? null;
-        if ($visitFail instanceof \Closure) {
-            $response = Container::getInstance()->invokeFunction($visitFail, [$this, $request, $wait_seconds]);
-            if (!$response instanceof Response) {
-                throw new \TypeError(sprintf('The closure must return %s instance', Response::class));
-            }
-        } else {
-            $content = str_replace('__WAIT__', (string) $wait_seconds, $this->config['visit_fail_text']);
-            $response = Response::create($content)->code($this->config['visit_fail_code']);
-        }
-        if ($this->config['visit_enable_show_rate_limit']) {
-            $response->header(['Retry-After' => $wait_seconds]);
-        }
+    public function buildLimitException($wait_seconds) {
+        $content = str_replace('__WAIT__', $wait_seconds, $this->config['visit_fail_text']);
+        $response = Response::create($content)->code($this->config['visit_fail_code']);
+        $response->header(['Retry-After' => $wait_seconds]);
         return new HttpResponseException($response);
     }
 
