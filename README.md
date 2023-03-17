@@ -6,7 +6,7 @@ TP 从 `5.1.6+` 版本开始才有中间件的支持，控制器中间件则需�
 
 ### 安装
 ```
-composer require topthink/think-throttle:^0.5.*
+composer require topthink/think-throttle:0.5.*
 ```
 
 ### 开启
