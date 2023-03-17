@@ -1,9 +1,8 @@
 <?php
 
-
 namespace think\middleware\throttle;
 
-use Psr\SimpleCache\CacheInterface;
+use think\Cache;
 
 /**
  * 漏桶算法
@@ -13,7 +12,7 @@ use Psr\SimpleCache\CacheInterface;
 class LeakyBucket extends ThrottleAbstract
 {
 
-    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, CacheInterface $cache): bool
+    public function allowRequest($key, $micronow, $max_requests, $duration, Cache $cache)
     {
         if ($max_requests <= 0) return false;
 

@@ -1,11 +1,8 @@
 <?php
 
-declare (strict_types = 1);
-
 namespace think\middleware;
 
 use Closure;
-use Psr\SimpleCache\CacheInterface;
 use think\Cache;
 use think\Config;
 use think\Container;
@@ -48,7 +45,7 @@ class Throttle
 
     /**
      * 缓存对象
-     * @var CacheInterface
+     * @var Cache
      */
     protected $cache;
 
@@ -77,7 +74,7 @@ class Throttle
     public function __construct(Cache $cache, Config $config)
     {
         $this->cache  = $cache;
-        $this->config = array_merge(static::$default_config, $config->get('throttle', []));
+        $this->config = array_merge(static::$default_config, $config->load('throttle', 'throttle'));
     }
 
     /**
@@ -85,7 +82,7 @@ class Throttle
      * @param Request $request
      * @return bool
      */
-    protected function allowRequest(Request $request): bool
+    protected function allowRequest(Request $request)
     {
         // 若请求类型不在限制内
         if (!in_array($request->method(), $this->config['visit_method'])) {
@@ -96,7 +93,7 @@ class Throttle
         if (null === $key) {
             return true;
         }
-        [$max_requests, $duration] = $this->parseRate($this->config['visit_rate']);
+        list($max_requests, $duration) = $this->parseRate($this->config['visit_rate']);
 
         $micronow = microtime(true);
         $now = (int) $micronow;
@@ -127,12 +124,8 @@ class Throttle
      * @param array $params
      * @return Response
      */
-    public function handle(Request $request, Closure $next, array $params=[]): Response
+    public function handle(Request $request, Closure $next)
     {
-        if ($params) {
-            $this->config = array_merge($this->config, $params);
-        }
-
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
@@ -151,7 +144,7 @@ class Throttle
      * @param Request $request
      * @return null|string
      */
-    protected function getCacheKey(Request $request): ?string
+    protected function getCacheKey(Request $request)
     {
         $key = $this->config['key'];
 
@@ -178,11 +171,11 @@ class Throttle
      * @param string $rate
      * @return int[]
      */
-    protected function parseRate($rate): array
+    protected function parseRate($rate)
     {
-        [$num, $period] = explode("/", $rate);
+        list($num, $period) = explode("/", $rate);
         $max_requests = (int) $num;
-        $duration = static::$duration[$period] ?? (int) $period;
+        $duration = isset(static::$duration[$period]) ? (int) static::$duration[$period] : (int) $period;
         return [$max_requests, $duration];
     }
 
@@ -191,7 +184,7 @@ class Throttle
      * @param string $rate '10/m'  '20/300'
      * @return $this
      */
-    public function setRate(string $rate): self
+    public function setRate($rate)
     {
         $this->config['visit_rate'] = $rate;
         return $this;
@@ -199,10 +192,10 @@ class Throttle
 
     /**
      * 设置缓存驱动
-     * @param CacheInterface $cache
+     * @param Cache $cache
      * @return $this
      */
-    public function setCache(CacheInterface $cache): self
+    public function setCache(Cache $cache)
     {
         $this->cache = $cache;
         return $this;
@@ -213,7 +206,7 @@ class Throttle
      * @param string $class_name
      * @return $this
      */
-    public function setDriverClass(string $class_name): self
+    public function setDriverClass($class_name)
     {
         $this->config['driver_name'] = $class_name;
         return $this;
@@ -223,7 +216,7 @@ class Throttle
      * 获取速率限制头
      * @return array
      */
-    public function getRateLimitHeaders(): array
+    public function getRateLimitHeaders()
     {
         return [
             'X-Rate-Limit-Limit' => $this->max_requests,
@@ -238,8 +231,8 @@ class Throttle
      * @param Request $request
      * @return HttpResponseException
      */
-    public function buildLimitException(int $wait_seconds, Request $request): HttpResponseException {
-        $visitFail = $this->config['visit_fail_response'] ?? null;
+    public function buildLimitException($wait_seconds, Request $request) {
+        $visitFail = isset($this->config['visit_fail_response']) ? $this->config['visit_fail_response'] : null;
         if ($visitFail instanceof \Closure) {
             $response = Container::getInstance()->invokeFunction($visitFail, [$this, $request, $wait_seconds]);
             if (!$response instanceof Response) {

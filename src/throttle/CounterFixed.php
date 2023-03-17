@@ -1,9 +1,8 @@
 <?php
 
-
 namespace think\middleware\throttle;
 
-use Psr\SimpleCache\CacheInterface;
+use think\Cache;
 
 /**
  * 计数器固定窗口算法
@@ -13,7 +12,7 @@ use Psr\SimpleCache\CacheInterface;
 class CounterFixed extends ThrottleAbstract
 {
 
-    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, CacheInterface $cache): bool
+    public function allowRequest($key, $micronow, $max_requests, $duration, Cache $cache)
     {
         $cur_requests = (int) $cache->get($key, 0);
         $now = (int) $micronow;

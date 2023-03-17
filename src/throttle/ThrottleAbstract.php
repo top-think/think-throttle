@@ -1,10 +1,9 @@
 <?php
 
-
 namespace think\middleware\throttle;
 
 
-use Psr\SimpleCache\CacheInterface;
+use think\Cache;
 
 abstract class ThrottleAbstract
 {
@@ -19,16 +18,16 @@ abstract class ThrottleAbstract
      * @param float $micronow       当前时间戳,可含毫秒
      * @param int $max_requests     允许最大请求数
      * @param int $duration         限流时长
-     * @param CacheInterface $cache 缓存对象
+     * @param Cache $cache 缓存对象
      * @return bool
      */
-    abstract public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, CacheInterface $cache): bool;
+    abstract public function allowRequest($key, $micronow, $max_requests, $duration, Cache $cache);
 
     /**
      * 计算距离下次合法请求还有多少秒
      * @return int
      */
-    public function getWaitSeconds(): int
+    public function getWaitSeconds()
     {
         return (int) $this->wait_seconds;
     }
@@ -37,7 +36,7 @@ abstract class ThrottleAbstract
      * 当前已有的请求数
      * @return int
      */
-    public function getCurRequests(): int
+    public function getCurRequests()
     {
         return (int) $this->cur_requests;
     }

@@ -1,9 +1,8 @@
 <?php
 
-
 namespace think\middleware\throttle;
 
-use Psr\SimpleCache\CacheInterface;
+use think\Cache;
 
 /**
  * 令牌桶算法
@@ -12,7 +11,7 @@ use Psr\SimpleCache\CacheInterface;
  */
 class TokenBucket extends ThrottleAbstract
 {
-    public function allowRequest(string $key, float $micronow, int $max_requests, int $duration, CacheInterface $cache): bool
+    public function allowRequest($key, $micronow, $max_requests, $duration, Cache $cache)
     {
         if ($max_requests <= 0 || $duration <= 0) return false;
 
