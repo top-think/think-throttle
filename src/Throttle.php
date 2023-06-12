@@ -68,11 +68,11 @@ class Throttle
 
     /**
      * Throttle constructor.
-     * @param Cache  $cache
      * @param Config $config
      */
     public function __construct(Config $config)
     {
+        $this->cache = null;
         $this->config = array_merge(static::$default_config, $config->load('throttle', 'throttle'));
     }
 
@@ -125,8 +125,9 @@ class Throttle
      */
     public function handle(Request $request, Closure $next)
     {
-        $this->cache = app('cache');
-        
+        if ($this->cache == null) {
+            $this->cache = app('cache');
+        }
         $allow = $this->allowRequest($request);
         if (!$allow) {
             // 访问受限
