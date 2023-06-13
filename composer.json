@@ -17,6 +17,11 @@
             "think\\middleware\\": "src"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "tests\\": "tests/"
+        }
+    },
     "extra": {
         "think":{
             "config":{
@@ -24,5 +29,10 @@
             }
         }
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "require-dev": {
+        "phpunit/phpunit": "^8.5",
+        "guzzlehttp/guzzle": "^7.7",
+        "topthink/think": "^6.0.0"
+    }
 }
