@@ -45,10 +45,10 @@ class BaseTest extends TestCase {
 
     /**
      * 加载 throttle 配置文件
-     * @param string $file 文件路径
+     * @param array $config
      */
-    function load_throttle_config(string $file) {
-        $this->app->config->load($file, 'throttle');
+    function set_throttle_config(array $config) {
+        $this->app->config->set($config, 'throttle');
     }
 
     /**

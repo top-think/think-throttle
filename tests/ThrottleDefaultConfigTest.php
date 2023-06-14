@@ -15,10 +15,12 @@ class ThrottleDefaultConfigTest extends BaseTest
     {
         parent::__construct($name, $data, $dataName);
         $this->load_middleware(__DIR__ . "/config/global-middleware.php");
-        $this->load_throttle_config(dirname(__DIR__) . "/src/config.php");  // 加载默认配置
+        $default_config = include dirname(__DIR__) . "/src/config.php";
+        $this->set_throttle_config($default_config);  // 加载默认配置
     }
 
-    function test_visit_rate() {
+    function test_visit_rate()
+    {
         // 默认的访问频率为 '100/m'
         $allowCount = 0;
         for ($i = 0; $i < 200; $i++) {
@@ -34,7 +36,8 @@ class ThrottleDefaultConfigTest extends BaseTest
         $this->assertEquals(100, $allowCount);
     }
 
-    function test_unlimited_request_method() {
+    function test_unlimited_request_method()
+    {
         // 默认只限制了 ['GET', 'HEAD'] ，对 POST 不做限制
         $allowCount = 0;
         for ($i = 0; $i < 200; $i++) {
