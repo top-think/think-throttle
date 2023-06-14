@@ -45,11 +45,6 @@ class DummyCache implements CacheInterface {
 
 
 class CustomCacheTest extends BaseTest {
-    public function __construct($name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $this->load_middleware(__DIR__ . "/config/global-middleware.php");
-    }
 
     function visit(int $count): int
     {
@@ -70,7 +65,7 @@ class CustomCacheTest extends BaseTest {
     function test_custom_cache()
     {
         $cache = new CustomCache();
-        $config = include dirname(__DIR__) . "/src/config.php";
+        $config = $this->get_default_throttle_config();
         $config['visit_rate'] = '10/m';
         $config['key'] = function(Throttle $throttle, \think\Request $request) use ($cache) {
             $throttle->setCache($cache);
@@ -85,7 +80,7 @@ class CustomCacheTest extends BaseTest {
     function test_dummy_cache()
     {
         $cache = new DummyCache();
-        $config = include dirname(__DIR__) . "/src/config.php";
+        $config = $this->get_default_throttle_config();
         $config['visit_rate'] = '10/m';
         $config['key'] = function(Throttle $throttle, \think\Request $request) use ($cache) {
             $throttle->setCache($cache);
@@ -98,4 +93,3 @@ class CustomCacheTest extends BaseTest {
 
 
 }
-

@@ -6,13 +6,17 @@ use think\App;
 abstract class BaseTest extends TestCase {
     static $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
     static $RUNTIME_PATH = __DIR__ . "/../runtime/";
+    static $GLOBAL_MIDDLEWARE_PATH = __DIR__ . "/config/global-middleware.php";
+    static $NEED_LOAD_GLOBAL_MIDDLEWARE = true;
     protected $app;
     function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
         $this->app = new App(static::$ROOT_PATH);
         $this->app->setRuntimePath(static::$RUNTIME_PATH);
-
+        if (static::$NEED_LOAD_GLOBAL_MIDDLEWARE) {
+            $this->load_middleware(static::$GLOBAL_MIDDLEWARE_PATH);
+        }
     }
 
     protected function tearDown(): void
@@ -31,7 +35,18 @@ abstract class BaseTest extends TestCase {
         foreach ($dirs as $dir) {
             rmdir($dir);
         }
+    }
 
+    /**
+     * 获取默认的 throttle 基础配置信息
+     * @return array
+     */
+    function get_default_throttle_config(): array {
+        static $config = [];    // 默认配置从文件中读取，可以设置为静态变量
+        if (!$config) {
+            $config = include dirname(__DIR__) . "/src/config.php";
+        }
+        return $config;
     }
 
     /**

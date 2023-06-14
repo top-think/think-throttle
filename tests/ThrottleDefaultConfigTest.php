@@ -14,9 +14,7 @@ class ThrottleDefaultConfigTest extends BaseTest
     public function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
-        $this->load_middleware(__DIR__ . "/config/global-middleware.php");
-        $default_config = include dirname(__DIR__) . "/src/config.php";
-        $this->set_throttle_config($default_config);  // 加载默认配置
+        $this->set_throttle_config($this->get_default_throttle_config());  // 加载默认配置
     }
 
     function test_visit_rate()
