@@ -3,7 +3,7 @@ namespace tests;
 use PHPUnit\Framework\TestCase;
 use think\App;
 
-class BaseTest extends TestCase {
+abstract class BaseTest extends TestCase {
     static $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
     static $RUNTIME_PATH = __DIR__ . "/../runtime/";
     protected $app;
@@ -49,14 +49,6 @@ class BaseTest extends TestCase {
      */
     function set_throttle_config(array $config) {
         $this->app->config->set($config, 'throttle');
-    }
-
-    /**
-     * 为避免警告 No tests found in class "tests\BaseTest".
-     * 添加一个恒为成功的测试
-     */
-    function test_always_success() {
-        $this->assertTrue(true);
     }
 
 }
