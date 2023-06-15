@@ -5,10 +5,7 @@
 
 namespace tests;
 
-
 use think\middleware\Throttle;
-use think\middleware\throttle\CounterFixed;
-use function React\Promise\all;
 
 class VisitRateTest extends BaseTest
 {
@@ -16,7 +13,7 @@ class VisitRateTest extends BaseTest
     {
         $request = new \think\Request();
         $request->setUrl($uri);
-        $response = $this->app->http->run($request);
+        $response = $this->get_response($request);
         return $response->getCode() == 200;
     }
 
@@ -33,8 +30,6 @@ class VisitRateTest extends BaseTest
                 $throttle->setRate('20/m');
             } else if ($path === '/path3') {
                 $throttle->setRate('30/m');
-            } else {
-                $throttle->setRate('100/m');
             }
             return $path;
         };

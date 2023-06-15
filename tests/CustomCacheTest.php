@@ -54,7 +54,7 @@ class CustomCacheTest extends BaseTest {
             $request->setMethod('GET');
             $request->setUrl('/');
 
-            $response = $this->app->http->run($request);
+            $response = $this->get_response($request);
             if ($response->getCode() == 200) {
                 $allowCount++;
             }

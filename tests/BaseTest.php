@@ -1,29 +1,42 @@
 <?php
 namespace tests;
+
 use PHPUnit\Framework\TestCase;
-use think\App;
 
 abstract class BaseTest extends TestCase {
     static $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
     static $RUNTIME_PATH = __DIR__ . "/../runtime/";
-    static $GLOBAL_MIDDLEWARE_PATH = __DIR__ . "/config/global-middleware.php";
-    static $NEED_LOAD_GLOBAL_MIDDLEWARE = true;
+
     protected $app;
-    function __construct($name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $this->app = new App(static::$ROOT_PATH);
-        $this->app->setRuntimePath(static::$RUNTIME_PATH);
-        if (static::$NEED_LOAD_GLOBAL_MIDDLEWARE) {
-            $this->load_middleware(static::$GLOBAL_MIDDLEWARE_PATH);
-        }
+    protected $throttle_config = [];
+    protected $middleware_file = __DIR__ . "/config/global-middleware.php";
+    protected $middleware_type = 'global';
+
+    /**
+     * thinkphp 一般运行在 php-fpm 模式下，每次处理请求都要重新加载配置文件
+     * @param \think\Request $request
+     * @return \think\Response
+     */
+    function get_response(\think\Request $request): \think\Response {
+        // 创建 \think\App 对象，设置配置
+        $app = new GCApp(static::$ROOT_PATH);
+        $app->setRuntimePath(static::$RUNTIME_PATH);
+
+        // 加载中间件
+        $app->middleware->import(include $this->middleware_file, $this->middleware_type);
+        // 设置 throttle 配置
+        $app->config->set($this->throttle_config, 'throttle');
+
+        $response =  $app->http->run($request);
+        $app->refClear();
+        return $response;
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
         // 每次测试完毕都需要清理 runtime cache 目录，避免影响其他单元测试
-        $cache_dir = $this->app->getRuntimePath() . "cache";
+        $cache_dir = static::$RUNTIME_PATH . "cache";
         $dirs = glob($cache_dir . '/*', GLOB_ONLYDIR);
         foreach ($dirs as $dir) {
             $files = glob($dir . '/*.php');
@@ -35,6 +48,9 @@ abstract class BaseTest extends TestCase {
         foreach ($dirs as $dir) {
             rmdir($dir);
         }
+        unset($cache_dir);
+        unset($dirs);
+        gc_collect_cycles();    // 进行垃圾回收
     }
 
     /**
@@ -50,20 +66,21 @@ abstract class BaseTest extends TestCase {
     }
 
     /**
-     * 加载中间件配置文件
+     * 设置中间件配置文件
      * @param string $file 文件的路径 eg: $this->app->getBasePath() . 'middleware.php'
      * @param string $type 类型：global 全局；route 路由；controller 控制器
      */
-    function load_middleware(string $file, string $type = 'global') {
-        $this->app->middleware->import(include $file, $type);
+    function set_middleware(string $file, string $type = 'global') {
+        $this->middleware_file = $file;
+        $this->middleware_type = $type;
     }
 
     /**
-     * 加载 throttle 配置文件
+     * 设置 throttle 配置
      * @param array $config
      */
     function set_throttle_config(array $config) {
-        $this->app->config->set($config, 'throttle');
+        $this->throttle_config = $config;
     }
 
 }
