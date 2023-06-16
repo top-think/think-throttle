@@ -3,7 +3,6 @@
 
 namespace tests;
 
-
 /**
  * 默认配置的单元测试
  * Class ThrottleDefaultConfig
@@ -11,10 +10,10 @@ namespace tests;
  */
 class ThrottleDefaultConfigTest extends BaseTest
 {
-    public function __construct($name = null, array $data = [], $dataName = '')
+    function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
-        $this->set_throttle_config($this->get_default_throttle_config());  // 加载默认配置
+        $this->set_throttle_config($this->get_default_throttle_config());
     }
 
     function test_visit_rate()
@@ -26,7 +25,7 @@ class ThrottleDefaultConfigTest extends BaseTest
             $request->setMethod('GET');
             $request->setUrl('/');
 
-            $response = $this->app->http->run($request);
+            $response = $this->get_response($request);
             if ($response->getCode() == 200) {
                 $allowCount++;
             }
@@ -43,7 +42,7 @@ class ThrottleDefaultConfigTest extends BaseTest
             $request->setMethod('POST');
             $request->setUrl('/');
 
-            $response = $this->app->http->run($request);
+            $response = $this->get_response($request);
             if ($response->getCode() == 200) {
                 $allowCount++;
             }
