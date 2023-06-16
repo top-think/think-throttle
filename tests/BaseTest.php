@@ -27,7 +27,7 @@ abstract class BaseTest extends TestCase {
         // 设置 throttle 配置
         $app->config->set($this->throttle_config, 'throttle');
 
-        $response =  $app->http->run($request);
+        $response = $app->http->run($request);
         $app->refClear();
         return $response;
     }
