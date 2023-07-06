@@ -2,8 +2,8 @@
     "name": "topthink/think-throttle",
     "description": "throttle middleware for thinkphp6",
     "require": {
-        "php": ">=7.2.0",
-        "topthink/framework": "^6.0.0"
+        "php": ">=8.0.0",
+        "topthink/framework": "^8.0"
     },
     "license": "Apache-2.0",
     "authors": [
@@ -31,8 +31,8 @@
     },
     "minimum-stability": "dev",
     "require-dev": {
-        "phpunit/phpunit": "^8.5",
+        "phpunit/phpunit": "^9.5",
         "guzzlehttp/guzzle": "^7.7",
-        "topthink/think": "^6.0.0"
+        "topthink/think": "^8.0.0"
     }
 }

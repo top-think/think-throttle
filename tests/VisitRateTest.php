@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * 访问频率的单元测试
  */
