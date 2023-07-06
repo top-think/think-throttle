@@ -24,7 +24,7 @@ return [
      *  - LeakyBucket : 漏桶限流算法
      */
     'driver_name' => CounterFixed::class,
-    // 响应体中设置速率限制的头部信息，含义见：https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting
+    // 响应体中设置速率限制的头部信息
     'visit_enable_show_rate_limit' => true,
     // 访问受限时返回的响应
     'visit_fail_response' => function (Throttle $throttle, Request $request, int $wait_seconds) {
