@@ -4,7 +4,7 @@ namespace tests;
 
 use PHPUnit\Framework\TestCase;
 
-abstract class BaseTest extends TestCase {
+abstract class Base extends TestCase {
     static $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
     static $RUNTIME_PATH = __DIR__ . "/../runtime/";
 

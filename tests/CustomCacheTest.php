@@ -46,7 +46,7 @@ class DummyCache implements CacheInterface {
 }
 
 
-class CustomCacheTest extends BaseTest {
+class CustomCacheTest extends Base {
 
     function visit(int $count): int
     {

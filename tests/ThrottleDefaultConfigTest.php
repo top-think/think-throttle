@@ -8,7 +8,7 @@ namespace tests;
  * Class ThrottleDefaultConfig
  * @package tests
  */
-class ThrottleDefaultConfigTest extends BaseTest
+class ThrottleDefaultConfigTest extends Base
 {
     function __construct($name = null, array $data = [], $dataName = '')
     {
