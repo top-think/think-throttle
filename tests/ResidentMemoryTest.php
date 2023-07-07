@@ -10,7 +10,7 @@ namespace tests;
  * Class ResidentMemoryTest
  * @package tests
  */
-class ResidentMemoryTest extends BaseTest
+class ResidentMemoryTest extends Base
 {
     public function test_resident_memory()
     {

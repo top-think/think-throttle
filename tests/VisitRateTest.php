@@ -8,7 +8,7 @@ namespace tests;
 
 use think\middleware\Throttle;
 
-class VisitRateTest extends BaseTest
+class VisitRateTest extends Base
 {
     function is_visit_allow(string $uri): bool
     {
