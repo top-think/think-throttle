@@ -33,7 +33,7 @@ class TokenBucket extends ThrottleAbstract
 
         if ($token_left < 1) {
             $tmp = (int) ceil($duration / $max_requests);
-            $this->wait_seconds = $tmp - ($micronow - $last_time) % $tmp;
+            $this->wait_seconds = $tmp - intval(($micronow - $last_time)) % $tmp;
             return false;
         }
         $this->cur_requests = $max_requests - $token_left;
