@@ -1,6 +1,6 @@
 {
     "name": "topthink/think-throttle",
-    "description": "throttle middleware for thinkphp6",
+    "description": "throttle middleware for thinkphp8",
     "require": {
         "php": ">=8.0.0",
         "topthink/framework": "^8.0"
