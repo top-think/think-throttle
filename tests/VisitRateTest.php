@@ -24,7 +24,7 @@ class VisitRateTest extends Base
     function test_custom_visit_rate() {
         $config = $this->get_default_throttle_config();
         $config['key'] = function(Throttle $throttle, \think\Request $request) {
-            $path = $request->url();
+            $path = $request->baseUrl();
             if ($path === '/path1') {
                 $throttle->setRate('10/m');
             } else if ($path === '/path2') {
@@ -41,16 +41,16 @@ class VisitRateTest extends Base
         $allowCount2 = 0;
         $allowCount3 = 0;
         for ($i = 0; $i < 200; $i++) {
-            if ($this->is_visit_allow('/')) {
+            if ($this->visit_with_http_code($this->create_request('/'))) {
                 $allowCount0++;
             }
-            if ($this->is_visit_allow('/path1')) {
+            if ($this->visit_with_http_code($this->create_request('/path1'), 404)) {
                 $allowCount1++;
             }
-            if ($this->is_visit_allow('/path2')) {
+            if ($this->visit_with_http_code($this->create_request('/path2'), 404)) {
                 $allowCount2++;
             }
-            if ($this->is_visit_allow('/path3')) {
+            if ($this->visit_with_http_code($this->create_request('/path3'), 404)) {
                 $allowCount3++;
             }
         }
