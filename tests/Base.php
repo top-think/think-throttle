@@ -5,13 +5,13 @@ namespace tests;
 use PHPUnit\Framework\TestCase;
 
 abstract class Base extends TestCase {
-    static $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
-    static $RUNTIME_PATH = __DIR__ . "/../runtime/";
+    static string $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
+    static string $RUNTIME_PATH = __DIR__ . "/../runtime/";
 
-    protected $app;
-    protected $throttle_config = [];
-    protected $middleware_file = __DIR__ . "/config/global-middleware.php";
-    protected $middleware_type = 'global';
+    protected \think\App $app;
+    protected array $throttle_config = [];
+    protected string $middleware_file = __DIR__ . "/config/global-middleware.php";
+    protected string $middleware_type = 'global';
 
     /**
      * thinkphp 一般运行在 php-fpm 模式下，每次处理请求都要重新加载配置文件
@@ -31,6 +31,36 @@ abstract class Base extends TestCase {
         $response = $app->http->run($request);
         $app->refClear();
         return $response;
+    }
+
+    /**
+     * @param string $uri
+     * @param string $method
+     * @param string $host
+     * @param array $data
+     * @param array $headers
+     * @return \think\Request
+     */
+    function create_request($uri = '/', $method = 'GET', $host = '127.0.0.1', $data = [], $headers = []): \think\Request
+    {
+        $request = new \think\Request();
+        $request->setMethod($method);
+        $request->setHost($host);
+        $request->setDomain($host);
+        $request->setUrl(sprintf('http://%s/%s', $host, $uri));
+
+        // uri 中提取 path info
+        $path = strpos($uri, '?') ? strstr($uri, '?', true) : $uri;
+        $request->setBaseUrl($path);
+        $path_info = empty($path) || '/' == $path ? '' : ltrim($path, '/');
+        $request->setPathinfo($path_info);
+        return $request;
+    }
+
+    function visit_with_http_code(\think\Request $request, int $http_code = 200): bool
+    {
+        $response = $this->get_response($request);
+        return $response->getCode() == $http_code;
     }
 
     protected function tearDown(): void
