@@ -63,10 +63,6 @@ class Throttle
     protected $max_requests = 0;    // 规定时间内允许的最大请求次数
     protected $expire = 0;          // 规定时间
     protected $remaining = 0;       // 规定时间内还能请求的次数
-    /**
-     * @var ThrottleAbstract|null
-     */
-    protected $driver_class = null;
 
     /**
      * Throttle constructor.
@@ -98,24 +94,23 @@ class Throttle
         [$max_requests, $duration] = $this->parseRate($this->config['visit_rate']);
 
         $micronow = microtime(true);
-        $now = (int) $micronow;
 
-        $this->driver_class = Container::getInstance()->invokeClass($this->config['driver_name']);
-        if (!$this->driver_class instanceof ThrottleAbstract) {
+        $driver = Container::getInstance()->invokeClass($this->config['driver_name']);
+        if (!($driver instanceof ThrottleAbstract)) {
             throw new \TypeError('The throttle driver must extends ' . ThrottleAbstract::class);
         }
-        $allow = $this->driver_class->allowRequest($key, $micronow, $max_requests, $duration, $this->cache);
+        $allow = $driver->allowRequest($key, $micronow, $max_requests, $duration, $this->cache);
 
         if ($allow) {
             // 允许访问
-            $this->now = $now;
+            $this->now = (int) $micronow;
             $this->expire = $duration;
             $this->max_requests = $max_requests;
-            $this->remaining = $max_requests - $this->driver_class->getCurRequests();
+            $this->remaining = $max_requests - $driver->getCurRequests();
             return true;
         }
 
-        $this->wait_seconds = $this->driver_class->getWaitSeconds();
+        $this->wait_seconds = $driver->getWaitSeconds();
         return false;
     }
 
@@ -165,7 +160,7 @@ class Throttle
 
         if ($key === true) {
             $key = $request->ip();
-        } elseif (false !== strpos($key, '__')) {
+        } elseif (is_string($key) && false !== strpos($key, '__')) {
             $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
         }
 
