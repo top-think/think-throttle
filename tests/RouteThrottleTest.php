@@ -11,17 +11,12 @@ namespace tests;
  */
 class RouteThrottleTest extends Base
 {
-    public function __construct(?string $name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $config = $this->get_default_throttle_config();
-        $config['key'] = '__CONTROLLER__/__ACTION__/__IP__';
-        $this->set_throttle_config($config);
-    }
-
     public function test_route_middleware_type()
     {
         $this->middleware_type = 'route';   // 路由中间件
+        $config = $this->get_default_throttle_config();
+        $config['key'] = '__CONTROLLER__/__ACTION__/__IP__';
+        $this->set_throttle_config($config);
         $allowCount1 = 0;
         $allowCount2 = 0;
         for ($i = 0; $i < 200; $i++) {
@@ -41,6 +36,9 @@ class RouteThrottleTest extends Base
     public function test_global_middleware_type()
     {
         $this->middleware_type = 'global';   // 全局中间件
+        $config = $this->get_default_throttle_config();
+        $config['key'] = '__CONTROLLER__/__ACTION__/__IP__';
+        $this->set_throttle_config($config);
         $allowCount1 = 0;
         $allowCount2 = 0;
         // 默认 100/m ，所以两个路由都是 50 次成功

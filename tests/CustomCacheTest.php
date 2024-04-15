@@ -5,18 +5,20 @@ declare(strict_types=1);
  */
 namespace tests;
 
+use DateInterval;
 use Psr\SimpleCache\CacheInterface;
 use think\middleware\Throttle;
+use think\Request;
 
 class CustomCache implements CacheInterface {
-    protected $data = [];
+    protected array $data = [];
 
     public function get(string $key, mixed $default = null): mixed
     {
-        return isset($this->data[$key]) ? $this->data[$key] : $default;
+        return $this->data[$key] ?? $default;
     }
 
-    public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
+    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
     {
         $this->data[$key] = $value;
         return true;
@@ -25,7 +27,7 @@ class CustomCache implements CacheInterface {
     public function delete(string $key): bool { return true; }
     public function clear(): bool { return true; }
     public function getMultiple(iterable $keys, mixed $default = null): iterable { return  [];}
-    public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool { return true; }
+    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool { return true; }
     public function deleteMultiple(iterable $keys): bool { return true; }
     public function has(string $key): bool { return true; }
 }
@@ -36,11 +38,11 @@ class DummyCache implements CacheInterface {
         return $default;
     }
 
-    public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool { return true; }
+    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool { return true; }
     public function delete(string $key): bool { return true; }
     public function clear(): bool { return true; }
     public function getMultiple(iterable $keys, mixed $default = null): iterable { return  [];}
-    public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool { return true; }
+    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool { return true; }
     public function deleteMultiple(iterable $keys): bool { return true; }
     public function has(string $key): bool { return true; }
 }
@@ -65,7 +67,7 @@ class CustomCacheTest extends Base {
         $cache = new CustomCache();
         $config = $this->get_default_throttle_config();
         $config['visit_rate'] = '10/m';
-        $config['key'] = function(Throttle $throttle, \think\Request $request) use ($cache) {
+        $config['key'] = function(Throttle $throttle, Request $request) use (&$cache) {
             $throttle->setCache($cache);
             return true;
         };
@@ -80,7 +82,7 @@ class CustomCacheTest extends Base {
         $cache = new DummyCache();
         $config = $this->get_default_throttle_config();
         $config['visit_rate'] = '10/m';
-        $config['key'] = function(Throttle $throttle, \think\Request $request) use ($cache) {
+        $config['key'] = function(Throttle $throttle, Request $request) use (&$cache) {
             $throttle->setCache($cache);
             return true;
         };
