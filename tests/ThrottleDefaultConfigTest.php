@@ -10,14 +10,9 @@ namespace tests;
  */
 class ThrottleDefaultConfigTest extends Base
 {
-    function __construct($name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $this->set_throttle_config($this->get_default_throttle_config());
-    }
-
     function test_visit_rate()
     {
+        $this->set_throttle_config($this->get_default_throttle_config());
         // 默认的访问频率为 '100/m'
         $allowCount = 0;
         for ($i = 0; $i < 200; $i++) {
@@ -31,6 +26,7 @@ class ThrottleDefaultConfigTest extends Base
 
     function test_unlimited_request_method()
     {
+        $this->set_throttle_config($this->get_default_throttle_config());
         // 默认只限制了 ['GET', 'HEAD'] ，对 POST 不做限制
         $allowCount = 0;
         for ($i = 0; $i < 200; $i++) {

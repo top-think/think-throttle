@@ -13,7 +13,8 @@ use think\middleware\throttle\TokenBucket;
  */
 class ThrottleDriverTest extends Base
 {
-    function driver_run(string $derive_name) {
+    function driver_run(string $derive_name): int
+    {
         $config = $this->get_default_throttle_config();
         $config['driver_name'] = $derive_name;
         $config['visit_rate'] = '60/m';

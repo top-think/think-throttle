@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace tests;
 
 
+use think\Request;
+
 /**
  * 常驻内存型的单元测试，当 TP 运行在常驻内存型的时候。
  * 一个 App 实例，处理多次请求
@@ -25,7 +27,7 @@ class ResidentMemoryTest extends Base
 
         for ($i = 0; $i < 200; $i++) {
             // 受访问频率限制
-            $request = new \think\Request();
+            $request = new Request();
             $request->setMethod('GET');
             $request->setUrl('/');
             $response = $app->http->run($request);
@@ -34,7 +36,7 @@ class ResidentMemoryTest extends Base
             }
 
             // 不受访问频率限制
-            $request = new \think\Request();
+            $request = new Request();
             $request->setMethod('POST');
             $request->setUrl('/');
 
