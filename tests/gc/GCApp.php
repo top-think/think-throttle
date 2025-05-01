@@ -6,48 +6,12 @@ declare(strict_types=1);
  * 因此创建 GCApp 作为其子类，添加清理这些引用的处理的方法。
  */
 
-namespace tests;
+namespace tests\gc;
 
 use Exception;
 use think\App;
 use think\initializer\BootService;
-use think\initializer\Error;
 use think\initializer\RegisterService;
-use think\Model;
-use think\Validate;
-
-
-class GCError extends Error
-{
-    /**
-     * 从 parent::init() 中移除 register_shutdown_function
-     * @param App $app
-     */
-    public function init(App $app): void
-    {
-        $this->app = $app;
-        error_reporting(E_ALL);
-        set_error_handler([$this, 'appError']);
-        set_exception_handler([$this, 'appException']);
-        // register_shutdown_function([$this, 'appShutdown']); // 移除
-    }
-}
-
-class GCValidate extends Validate
-{
-    public static function cleanMaker(): void
-    {
-        static::$maker = [];
-    }
-}
-
-class GCModel extends Model
-{
-    public static function cleanMaker(): void
-    {
-        static::$_maker = [];
-    }
-}
 
 /**
  * 可被自动 gc 的，但需要手动调用 refClear 函数
@@ -56,11 +20,22 @@ class GCModel extends Model
  */
 class GCApp extends App
 {
+    const ROOT_PATH = __DIR__ . "/../../vendor/topthink/think" . DIRECTORY_SEPARATOR;
+    const RUNTIME_PATH = __DIR__ . "/../../runtime" . DIRECTORY_SEPARATOR;
     protected $initializers = [     // 覆盖父类
         GCError::class,             // 去掉 register_shutdown_function
         RegisterService::class,     // 原来就有的
         BootService::class,         // 原来就有的
     ];
+
+    public function __construct(string $rootPath = '')
+    {
+        if (empty($rootPath)) {
+            $rootPath = realpath(static::ROOT_PATH);
+        }
+        parent::__construct($rootPath);
+        $this->setRuntimePath(static::RUNTIME_PATH);
+    }
 
     /**
      * 添加清理函数

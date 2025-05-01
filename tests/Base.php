@@ -4,18 +4,20 @@ declare(strict_types=1);
 namespace tests;
 
 use PHPUnit\Framework\TestCase;
+use tests\gc\GCApp;
+use think\middleware\SessionInit;
+use think\middleware\Throttle;
 use think\Request;
 use think\Response;
 
-require_once __DIR__ . '/controller/User.php';
-
 abstract class Base extends TestCase
 {
-    static string $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
-    static string $RUNTIME_PATH = __DIR__ . "/../runtime/";
-
     protected array $throttle_config = [];
-    protected string $middleware_file = __DIR__ . "/config/global-middleware.php";
+    protected array $middleware = [
+        Throttle::class,
+        // Session初始化
+        SessionInit::class
+    ];
     protected string $middleware_type = 'global';
 
     function visit_uri_success_count(string $uri, int $count, int $http_code = 200): int
@@ -59,6 +61,7 @@ abstract class Base extends TestCase
     function visit_with_http_code(Request $request, int $http_code = 200): bool
     {
         $response = $this->get_response($request);
+
         return $response->getCode() == $http_code;
     }
 
@@ -70,12 +73,11 @@ abstract class Base extends TestCase
     function get_response(Request $request): Response
     {
         // 创建 \think\App 对象，设置配置
-        $app = new GCApp(static::$ROOT_PATH);
-        $app->setRuntimePath(static::$RUNTIME_PATH);
+        $app = new GCApp();
         $app->env->set("APP_DEBUG", true);
 
         // 加载中间件
-        $app->middleware->import(include $this->middleware_file, $this->middleware_type);
+        $app->middleware->import($this->middleware, $this->middleware_type);
         // 设置 throttle 配置
         $app->config->set($this->throttle_config, 'throttle');
 
@@ -98,17 +100,6 @@ abstract class Base extends TestCase
     }
 
     /**
-     * 设置中间件配置文件
-     * @param string $file 文件的路径 eg: $this->app->getBasePath() . 'middleware.php'
-     * @param string $type 类型：global 全局；route 路由；controller 控制器
-     */
-    function set_middleware(string $file, string $type = 'global'): void
-    {
-        $this->middleware_file = $file;
-        $this->middleware_type = $type;
-    }
-
-    /**
      * 设置 throttle 配置
      * @param array $config
      */
@@ -121,7 +112,7 @@ abstract class Base extends TestCase
     {
         parent::tearDown();
         // 每次测试完毕都需要清理 runtime cache 目录，避免影响其他单元测试
-        $cache_dir = static::$RUNTIME_PATH . "cache";
+        $cache_dir = GCApp::RUNTIME_PATH . "cache";
         $dirs = glob($cache_dir . '/*', GLOB_ONLYDIR);
         foreach ($dirs as $dir) {
             $files = glob($dir . '/*.php');
