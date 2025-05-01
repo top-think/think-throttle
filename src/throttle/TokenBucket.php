@@ -21,7 +21,7 @@ class TokenBucket extends ThrottleAbstract
         if ($max_requests <= 0 || $duration <= 0) return false;
 
         $assist_key = $key . 'store_num';              // 辅助缓存
-        $rate = (float) $max_requests / $duration;     // 平均一秒生成 n 个 token
+        $rate = (float)$max_requests / $duration;     // 平均一秒生成 n 个 token
 
         $last_time = $cache->get($key, 0);
         $store_num = $cache->get($assist_key, 0);
@@ -33,10 +33,10 @@ class TokenBucket extends ThrottleAbstract
         }
 
         $create_num = floor(($micro_now - $last_time) * $rate);              // 推算生成的 token 数
-        $token_left = (int) min($max_requests, $store_num + $create_num);  //当前剩余 tokens 数量
+        $token_left = (int)min($max_requests, $store_num + $create_num);  //当前剩余 tokens 数量
 
         if ($token_left < 1) {
-            $tmp = (int) ceil($duration / $max_requests);
+            $tmp = (int)ceil($duration / $max_requests);
             $this->wait_seconds = $tmp - intval(($micro_now - $last_time)) % $tmp;
             return false;
         }

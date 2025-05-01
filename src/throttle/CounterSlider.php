@@ -19,7 +19,7 @@ class CounterSlider extends ThrottleAbstract
     public function allowRequest(string $key, float $micro_now, int $max_requests, int $duration, CacheInterface $cache): bool
     {
         $history = $cache->get($key, []);
-        $now = (int) $micro_now;
+        $now = (int)$micro_now;
         // 移除过期的请求的记录
         $history = array_values(array_filter($history, function ($val) use ($now, $duration) {
             return $val >= $now - $duration;

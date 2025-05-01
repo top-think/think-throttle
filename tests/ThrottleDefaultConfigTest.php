@@ -30,7 +30,7 @@ class ThrottleDefaultConfigTest extends Base
         // 默认只限制了 ['GET', 'HEAD'] ，对 POST 不做限制
         $allowCount = 0;
         for ($i = 0; $i < 200; $i++) {
-            $request = $this->create_request('/','POST');
+            $request = $this->create_request('/', 'POST');
             if ($this->visit_with_http_code($request)) {
                 $allowCount++;
             }
