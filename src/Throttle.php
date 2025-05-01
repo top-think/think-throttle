@@ -11,7 +11,7 @@ use think\Cache;
 use think\Config;
 use think\Container;
 use think\exception\HttpResponseException;
-use think\middleware\annotation\RateLimiter as RateLimiterAnnotation;
+use think\middleware\annotation\RateLimit as RateLimitAnnotation;
 use think\middleware\throttle\CounterFixed;
 use think\middleware\throttle\ThrottleAbstract;
 use think\Request;
@@ -216,7 +216,7 @@ class Throttle
             $action = $request->action();
             if (method_exists($controller, $action)) {
                 $reflectionMethod = new ReflectionMethod($controller, $action);
-                $attributes = $reflectionMethod->getAttributes(RateLimiterAnnotation::class);
+                $attributes = $reflectionMethod->getAttributes(RateLimitAnnotation::class);
                 foreach ($attributes as $attribute) {
                     $annotation = $attribute->newInstance();
                     $key = $this->getCacheKey($request, $annotation->key, $annotation->driver);
