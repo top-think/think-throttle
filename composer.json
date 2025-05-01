@@ -19,7 +19,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "tests\\": "tests/"
+            "tests\\": "tests/",
+            "app\\": "tests/app"
         }
     },
     "extra": {

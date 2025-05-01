@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace tests;
 
 
+use tests\gc\GCApp;
 use think\Request;
 
 /**
@@ -16,9 +17,8 @@ class ResidentMemoryTest extends Base
 {
     public function test_resident_memory()
     {
-        $app = new GCApp(static::$ROOT_PATH);
-        $app->setRuntimePath(static::$RUNTIME_PATH);
-        $app->middleware->import(include $this->middleware_file, $this->middleware_type);
+        $app = new GCApp();
+        $app->middleware->import($this->middleware, $this->middleware_type);
         $app->config->set($this->get_default_throttle_config(), 'throttle');
 
         // 处理多个请求
@@ -45,7 +45,6 @@ class ResidentMemoryTest extends Base
                 $allowCount2++;
             }
         }
-
         $app->refClear();
         $this->assertEquals(100, $allowCount1);
         $this->assertEquals(200, $allowCount2);
