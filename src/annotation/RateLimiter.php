@@ -9,7 +9,10 @@ class RateLimiter
 {
     const AUTO = true;
     const IP = '__IP__';
-    public function __construct(public string $rate, public mixed $key = RateLimiter::AUTO, public string $driver=CounterFixed::class, public string $message='Too Many Requests')
+    public function __construct(public string $rate,
+                                public mixed $key = RateLimiter::AUTO,
+                                public string $driver=CounterFixed::class,
+                                public string $message='Too Many Requests')
     {
 
     }

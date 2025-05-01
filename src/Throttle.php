@@ -11,7 +11,6 @@ use think\Cache;
 use think\Config;
 use think\Container;
 use think\exception\HttpResponseException;
-use think\facade\Session;
 use think\middleware\throttle\CounterFixed;
 use think\middleware\throttle\ThrottleAbstract;
 use think\Request;
