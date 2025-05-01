@@ -6,6 +6,8 @@ use PHPUnit\Framework\TestCase;
 use think\Request;
 use think\Response;
 
+require_once __DIR__ . '/controller/User.php';
+
 abstract class Base extends TestCase {
     static string $ROOT_PATH = __DIR__ . "/../vendor/topthink/think";
     static string $RUNTIME_PATH = __DIR__ . "/../runtime/";
@@ -23,6 +25,7 @@ abstract class Base extends TestCase {
         // 创建 \think\App 对象，设置配置
         $app = new GCApp(static::$ROOT_PATH);
         $app->setRuntimePath(static::$RUNTIME_PATH);
+        $app->env->set("APP_DEBUG", true);
 
         // 加载中间件
         $app->middleware->import(include $this->middleware_file, $this->middleware_type);
@@ -64,6 +67,17 @@ abstract class Base extends TestCase {
     {
         $response = $this->get_response($request);
         return $response->getCode() == $http_code;
+    }
+
+    function visit_uri_success_count(string $uri, int $count, int $http_code = 200): int {
+        $success = 0;
+        for ($i = 0; $i < $count; $i++) {
+            $request = $this->create_request($uri);
+            if ($this->visit_with_http_code($request, $http_code)) {
+                $success++;
+            }
+        }
+        return $success;
     }
 
     protected function tearDown(): void

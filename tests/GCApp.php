@@ -39,7 +39,7 @@ class GCValidate extends Validate {
 
 class GCModel extends Model {
     public static function cleanMaker(): void
-    { static::$maker = []; }
+    { static::$_maker = []; }
 }
 
 /**
