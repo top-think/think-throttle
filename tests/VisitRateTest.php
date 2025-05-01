@@ -12,20 +12,13 @@ use think\Request;
 
 class VisitRateTest extends Base
 {
-    function is_visit_allow(string $uri): bool
-    {
-        $request = new Request();
-        $request->setUrl($uri);
-        $response = $this->get_response($request);
-        return $response->getCode() == 200;
-    }
-
     /**
      * 根据请求的 url 设置不同的访问频率
      */
-    function test_custom_visit_rate() {
+    function test_custom_visit_rate()
+    {
         $config = $this->get_default_throttle_config();
-        $config['key'] = function(Throttle $throttle, Request $request) {
+        $config['key'] = function (Throttle $throttle, Request $request) {
             $throttle->setDriverClass(CounterSlider::class);
             $path = $request->baseUrl();
             if ($path === '/path1') {
@@ -66,7 +59,8 @@ class VisitRateTest extends Base
     /**
      * 访问 2 个周期，成功次数 2 * count
      */
-    function test_visit_rate_more_period() {
+    function test_visit_rate_more_period()
+    {
         $config = $this->get_default_throttle_config();
         $config['visit_rate'] = '10/s';
         $this->set_throttle_config($config);
@@ -81,5 +75,13 @@ class VisitRateTest extends Base
             usleep(10);     // 请求均匀分布
         }
         $this->assertEquals(20, $allowCount);
+    }
+
+    function is_visit_allow(string $uri): bool
+    {
+        $request = new Request();
+        $request->setUrl($uri);
+        $response = $this->get_response($request);
+        return $response->getCode() == 200;
     }
 }

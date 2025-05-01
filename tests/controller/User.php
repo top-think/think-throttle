@@ -4,6 +4,7 @@ namespace app\controller;
 
 use app\BaseController;
 use think\middleware\annotation\RateLimiter;
+
 class User extends BaseController
 {
 

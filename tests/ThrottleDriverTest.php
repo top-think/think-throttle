@@ -13,6 +13,11 @@ use think\middleware\throttle\TokenBucket;
  */
 class ThrottleDriverTest extends Base
 {
+    function test_counter_fixed()
+    {
+        $this->assertEquals(60, $this->driver_run(CounterFixed::class));
+    }
+
     function driver_run(string $derive_name): int
     {
         $config = $this->get_default_throttle_config();
@@ -29,19 +34,19 @@ class ThrottleDriverTest extends Base
         return $allowCount;
     }
 
-    function test_counter_fixed() {
-        $this->assertEquals(60, $this->driver_run(CounterFixed::class));
-    }
-
-    function test_counter_slider() {
+    function test_counter_slider()
+    {
         $this->assertEquals(60, $this->driver_run(CounterSlider::class));
     }
 
-    function test_leaky_bucket() {
+    function test_leaky_bucket()
+    {
         // 漏桶算法，速率 1/s
         $this->assertEquals(1, $this->driver_run(LeakyBucket::class));
     }
-    function test_token_bucket() {
+
+    function test_token_bucket()
+    {
         $this->assertEquals(60, $this->driver_run(TokenBucket::class));
     }
 }

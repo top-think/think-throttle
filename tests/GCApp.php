@@ -17,7 +17,8 @@ use think\Model;
 use think\Validate;
 
 
-class GCError extends Error {
+class GCError extends Error
+{
     /**
      * 从 parent::init() 中移除 register_shutdown_function
      * @param App $app
@@ -32,14 +33,20 @@ class GCError extends Error {
     }
 }
 
-class GCValidate extends Validate {
+class GCValidate extends Validate
+{
     public static function cleanMaker(): void
-    { static::$maker = []; }
+    {
+        static::$maker = [];
+    }
 }
 
-class GCModel extends Model {
+class GCModel extends Model
+{
     public static function cleanMaker(): void
-    { static::$_maker = []; }
+    {
+        static::$_maker = [];
+    }
 }
 
 /**
@@ -47,7 +54,8 @@ class GCModel extends Model {
  * Class GCApp
  * @package tests
  */
-class GCApp extends App {
+class GCApp extends App
+{
     protected $initializers = [     // 覆盖父类
         GCError::class,             // 去掉 register_shutdown_function
         RegisterService::class,     // 原来就有的
@@ -71,7 +79,8 @@ class GCApp extends App {
             foreach ($this->getIterator() as $name => $_v) {
                 $names[] = $name;
             }
-        } catch (Exception) {}
+        } catch (Exception) {
+        }
         foreach ($names as $name) {
             $this->delete($name);
         }
