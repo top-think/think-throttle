@@ -61,7 +61,6 @@ abstract class Base extends TestCase
     function visit_with_http_code(Request $request, int $http_code = 200): bool
     {
         $response = $this->get_response($request);
-
         return $response->getCode() == $http_code;
     }
 

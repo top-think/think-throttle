@@ -220,6 +220,8 @@ class Throttle
                 foreach ($attributes as $attribute) {
                     $annotation = $attribute->newInstance();
                     $key = $this->getCacheKey($request, $annotation->key, $annotation->driver);
+                    $key = $controller . $action . $key; // 注解需要以实际方法作为前缀
+
                     if (!$this->allowRequest($key, $annotation->rate, $annotation->driver)) {
                         $this->config['visit_fail_text'] = $annotation->message;
                         return false;
