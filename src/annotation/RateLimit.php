@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace think\middleware\annotation;
 
 use Attribute;
+use Closure;
 use think\middleware\throttle\CounterFixed;
 
 #[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_METHOD)]
@@ -12,10 +13,10 @@ class RateLimit
     const AUTO = true;
     const IP = '__IP__';
 
-    public function __construct(public string $rate,
-                                public mixed  $key = RateLimit::AUTO,
-                                public string $driver = CounterFixed::class,
-                                public string $message = 'Too Many Requests')
+    public function __construct(public string                   $rate,
+                                public string|bool|Closure|null $key = RateLimit::AUTO,
+                                public string                   $driver = CounterFixed::class,
+                                public string                   $message = 'Too Many Requests')
     {
 
     }

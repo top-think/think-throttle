@@ -32,12 +32,12 @@ class Throttle
      */
     public static array $default_config = [
         'prefix' => 'throttle_',                    // 缓存键前缀，防止键与其他应用冲突
-        'key' => true,                           // 节流规则 true为自动规则
+        'key' => true,                              // 节流规则 true 为自动规则
         'visit_method' => ['GET', 'HEAD'],          // 要被限制的请求类型
-        'visit_rate' => null,                       // 节流频率 null 表示不限制 eg: 10/m  20/h  300/d
+        'visit_rate' => '',                         // 节流频率, 空字符串表示不限制 eg: '', '10/m', '20/h', '300/d'
         'visit_enable_show_rate_limit' => true,     // 在响应体中设置速率限制的头部信息
-        'visit_fail_code' => 429,                   // 访问受限时返回的http状态码，当没有visit_fail_response时生效
-        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息，当没有visit_fail_response时生效
+        'visit_fail_code' => 429,                   // 访问受限时返回的 http 状态码，当没有 visit_fail_response 时生效
+        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息，当没有 visit_fail_response 时生效
         'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
@@ -131,9 +131,11 @@ class Throttle
     /**
      * 生成缓存的 key
      * @param Request $request
+     * @param string|bool|Closure|null $key
+     * @param string $driver
      * @return string
      */
-    protected function getCacheKey(Request $request, mixed $key, string $driver): string
+    protected function getCacheKey(Request $request, string|bool|Closure|null $key, string $driver): string
     {
         if ($key instanceof Closure) {
             $key = Container::getInstance()->invokeFunction($key, [$this, $request]);
@@ -160,10 +162,10 @@ class Throttle
      * @param string $driver
      * @return bool
      */
-    protected function allowRequest(string $key, mixed $rate, string $driver): bool
+    protected function allowRequest(string $key, string $rate, string $driver): bool
     {
         // 不限制
-        if ($rate === null || $rate === '' || $key === '') {
+        if ($rate === '' || $key === '') {
             return true;
         }
 
