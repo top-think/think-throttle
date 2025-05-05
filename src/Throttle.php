@@ -18,7 +18,6 @@ use think\Request;
 use think\Response;
 use think\Session;
 use TypeError;
-use function sprintf;
 
 /**
  * 访问频率限制中间件
@@ -27,6 +26,7 @@ use function sprintf;
  */
 class Throttle
 {
+    const WAIT = '__WAIT__';
     /**
      * 默认配置参数
      * @var array
@@ -38,7 +38,7 @@ class Throttle
         'visit_rate' => '',                         // 节流频率, 空字符串表示不限制 eg: '', '10/m', '20/h', '300/d'
         'visit_enable_show_rate_limit' => true,     // 在响应体中设置速率限制的头部信息
         'visit_fail_code' => 429,                   // 访问受限时返回的 http 状态码，当没有 visit_fail_response 时生效
-        'visit_fail_text' => 'Too many requests, try again after __WAIT__ seconds.',   // 访问受限时访问的文本信息
+        'visit_fail_text' => 'Too many requests, try again after '. self::WAIT . ' seconds.',   // 访问受限时访问的文本信息
         'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
@@ -175,13 +175,14 @@ class Throttle
         if ($key === true) {
             $key = $request->ip();
         } elseif (is_string($key) && str_contains($key, '__')) {
-            $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__', '__SESSION__'],
+            $key = str_replace([RateLimitAnnotation::CONTROLLER, RateLimitAnnotation::ACTION, RateLimitAnnotation::IP,
+                RateLimitAnnotation::SESSION],
                 [$request->controller(), $request->action(), $request->ip(), $this->session->getId()],
                 $key);
         }
 
         if ($annotation) {
-            // 注解需要以实际方法作为前缀
+            // 注解方式的需添加以实际方法作为前缀
             $key = $request->controller() . $request->action() . $key;
         }
 
@@ -262,14 +263,14 @@ class Throttle
      */
     public function buildLimitException(int $wait_seconds, Request $request): HttpResponseException
     {
-        $visitFail = $this->config['visit_fail_response'] ?? null;
+        $visitFail = $this->config['visit_fail_response'];
         if ($visitFail instanceof Closure) {
             $response = Container::getInstance()->invokeFunction($visitFail, [$this, $request, $wait_seconds]);
             if (!$response instanceof Response) {
-                throw new TypeError(sprintf('The closure must return %s instance', Response::class));
+                throw new TypeError('The closure must return ' . Response::class . ' instance');
             }
         } else {
-            $content = str_replace('__WAIT__', (string)$wait_seconds, $this->getFailMessage());
+            $content = str_replace(self::WAIT, (string)$wait_seconds, $this->getFailMessage());
             $response = Response::create($content)->code($this->config['visit_fail_code']);
         }
         if ($this->config['visit_enable_show_rate_limit']) {
