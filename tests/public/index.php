@@ -7,21 +7,9 @@ use tests\gc\GCApp;
 require __DIR__ . '/../../vendor/autoload.php';
 
 $app = new GCApp();
+$app->env->set("APP_DEBUG", true);
 $app->initialize();
-
-// 加载配置文件
-$configPath = __DIR__ . '/../config/';
-if (is_dir($configPath)) {
-    $files = glob($configPath . '*' . $app->getConfigExt());
-    foreach ($files as $file) {
-        $app->config->load($file, pathinfo($file, PATHINFO_FILENAME));
-    }
-}
-// 加载中间件
-$middlewareFile = __DIR__ . '/../app/middleware.php';
-if (is_file($middlewareFile)) {
-    $app->middleware->import(include $middlewareFile, 'global');
-}
+$app->loadApp(realpath(__DIR__ . '/..') . DIRECTORY_SEPARATOR);
 
 // 执行HTTP应用并响应
 $http = $app->http;

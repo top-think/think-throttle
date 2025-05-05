@@ -34,4 +34,11 @@ class User extends BaseController
         return '优惠券发送成功';
     }
 
+    #[RateLimit(rate: "1/d", key: RateLimit::SESSION, message: '每个用户每天只能领取一次优惠券')]
+    #[RateLimit(rate: '100/d', key: 'coupon', message: '今天的优惠券已经发完，请明天再来')]
+    public function coupon2(): string
+    {
+        return '优惠券发送成功';
+    }
+
 }

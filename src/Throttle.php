@@ -16,6 +16,7 @@ use think\middleware\throttle\CounterFixed;
 use think\middleware\throttle\ThrottleAbstract;
 use think\Request;
 use think\Response;
+use think\Session;
 use TypeError;
 use function sprintf;
 
@@ -37,7 +38,7 @@ class Throttle
         'visit_rate' => '',                         // 节流频率, 空字符串表示不限制 eg: '', '10/m', '20/h', '300/d'
         'visit_enable_show_rate_limit' => true,     // 在响应体中设置速率限制的头部信息
         'visit_fail_code' => 429,                   // 访问受限时返回的 http 状态码，当没有 visit_fail_response 时生效
-        'visit_fail_text' => 'Too Many Requests',   // 访问受限时访问的文本信息，当没有 visit_fail_response 时生效
+        'visit_fail_text' => 'Too many requests, try again after __WAIT__ seconds.',   // 访问受限时访问的文本信息
         'visit_fail_response' => null,              // 访问受限时的响应信息闭包回调
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
@@ -55,6 +56,7 @@ class Throttle
      */
     protected CacheInterface $cache;
     protected App $app;
+    protected Session $session;
 
     /**
      * 配置参数
@@ -74,12 +76,13 @@ class Throttle
      * @param Cache $cache
      * @param Config $config
      */
-    public function __construct(Cache $cache, Config $config, App $app)
+    public function __construct(Cache $cache, Config $config, App $app, Session $session)
     {
         $this->cache = $cache;
         $this->config = array_merge(static::$default_config, $config->get('throttle', []));
         $this->app = $app;
         $this->config_instance = $config;
+        $this->session = $session;
     }
 
     /**
@@ -95,7 +98,7 @@ class Throttle
             $this->config = array_merge($this->config, $params);
         }
 
-        $allow = $this->allowRequestByConfig($request) && $this->allowRequestByAnnotation($request);
+        $allow = $this->allowRequestByAnnotation($request) && $this->allowRequestByConfig($request);
         if (!$allow) {
             // 访问受限
             throw $this->buildLimitException($this->wait_seconds, $request);
@@ -113,43 +116,73 @@ class Throttle
     }
 
     /**
-     * 根据**配置**信息是否允许请求通过
+     * 根据**注解**信息是否允许请求通过
      * @param Request $request
      * @return bool
      */
-    protected function allowRequestByConfig(Request $request): bool
+    protected function allowRequestByAnnotation(Request $request): bool
     {
-        // 若请求类型不在限制内
-        if (!in_array($request->method(), $this->config['visit_method'])) {
-            return true;
+        // 处理注解
+        $controller = $this->getFullController($request);
+        if ($controller) {
+            $action = $request->action();
+            if (method_exists($controller, $action)) {
+                $reflectionMethod = new ReflectionMethod($controller, $action);
+                $attributes = $reflectionMethod->getAttributes(RateLimitAnnotation::class);
+                foreach ($attributes as $attribute) {
+                    $annotation = $attribute->newInstance();
+                    $key = $this->getCacheKey($request, $annotation->key, $annotation->driver, true);
+                    if (!$this->allowRequest($key, $annotation->rate, $annotation->driver)) {
+                        $this->config['visit_fail_text'] = $annotation->message;
+                        return false;
+                    }
+                }
+            }
         }
-        $driver = $this->config['driver_name'];
-        $key = $this->getCacheKey($request, $this->config['key'], $driver);
-        return $this->allowRequest($key, $this->config['visit_rate'], $driver);
+        return true;
+    }
+
+    private function getFullController(Request $request): string
+    {
+        $controller = $request->controller();
+        if (empty($controller)) {
+            return '';
+        }
+        $suffix = $this->config_instance->get('route.controller_suffix') ? 'Controller' : '';
+        $layer = $this->config_instance->get('route.controller_layer') ?: 'controller';
+        $controllerClassName = $this->app->parseClass($layer, $controller . $suffix);
+        return $controllerClassName;
     }
 
     /**
      * 生成缓存的 key
      * @param Request $request
-     * @param string|bool|Closure|null $key
+     * @param string|bool|Closure $key
      * @param string $driver
      * @return string
      */
-    protected function getCacheKey(Request $request, string|bool|Closure|null $key, string $driver): string
+    protected function getCacheKey(Request $request, string|bool|Closure $key, string $driver, bool $annotation = false): string
     {
         if ($key instanceof Closure) {
             $key = Container::getInstance()->invokeFunction($key, [$this, $request]);
         }
 
-        if ($key === null || $key === false) {
-            // 关闭当前限制
+        if ($key === false || $key === '') {
+            // 不做限制
             return '';
         }
 
         if ($key === true) {
             $key = $request->ip();
         } elseif (is_string($key) && str_contains($key, '__')) {
-            $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__'], [$request->controller(), $request->action(), $request->ip()], $key);
+            $key = str_replace(['__CONTROLLER__', '__ACTION__', '__IP__', '__SESSION__'],
+                [$request->controller(), $request->action(), $request->ip(), $this->session->getId()],
+                $key);
+        }
+
+        if ($annotation) {
+            // 注解需要以实际方法作为前缀
+            $key = $request->controller() . $request->action() . $key;
         }
 
         return md5($this->config['prefix'] . $key . $driver);
@@ -206,44 +239,19 @@ class Throttle
     }
 
     /**
-     * 根据**注解**信息是否允许请求通过
+     * 根据**配置**信息是否允许请求通过
      * @param Request $request
      * @return bool
      */
-    protected function allowRequestByAnnotation(Request $request): bool
+    protected function allowRequestByConfig(Request $request): bool
     {
-        // 处理注解
-        $controller = $this->getFullController($request);
-        if ($controller) {
-            $action = $request->action();
-            if (method_exists($controller, $action)) {
-                $reflectionMethod = new ReflectionMethod($controller, $action);
-                $attributes = $reflectionMethod->getAttributes(RateLimitAnnotation::class);
-                foreach ($attributes as $attribute) {
-                    $annotation = $attribute->newInstance();
-                    $key = $this->getCacheKey($request, $annotation->key, $annotation->driver);
-                    $key = $controller . $action . $key; // 注解需要以实际方法作为前缀
-
-                    if (!$this->allowRequest($key, $annotation->rate, $annotation->driver)) {
-                        $this->config['visit_fail_text'] = $annotation->message;
-                        return false;
-                    }
-                }
-            }
+        // 若请求类型不在限制内
+        if (!in_array($request->method(), $this->config['visit_method'])) {
+            return true;
         }
-        return true;
-    }
-
-    private function getFullController(Request $request): string
-    {
-        $controller = $request->controller();
-        if (empty($controller)) {
-            return '';
-        }
-        $suffix = $this->config_instance->get('route.controller_suffix') ? 'Controller' : '';
-        $layer = $this->config_instance->get('route.controller_layer') ?: 'controller';
-        $controllerClassName = $this->app->parseClass($layer, $controller . $suffix);
-        return $controllerClassName;
+        $driver = $this->config['driver_name'];
+        $key = $this->getCacheKey($request, $this->config['key'], $driver);
+        return $this->allowRequest($key, $this->config['visit_rate'], $driver);
     }
 
     /**
@@ -261,13 +269,22 @@ class Throttle
                 throw new TypeError(sprintf('The closure must return %s instance', Response::class));
             }
         } else {
-            $content = str_replace('__WAIT__', (string)$wait_seconds, $this->config['visit_fail_text']);
+            $content = str_replace('__WAIT__', (string)$wait_seconds, $this->getFailMessage());
             $response = Response::create($content)->code($this->config['visit_fail_code']);
         }
         if ($this->config['visit_enable_show_rate_limit']) {
             $response->header(['Retry-After' => $wait_seconds]);
         }
         return new HttpResponseException($response);
+    }
+
+    /**
+     * 获取受限时的信息
+     * @return string
+     */
+    public function getFailMessage(): string
+    {
+        return $this->config['visit_fail_text'];
     }
 
     /**
