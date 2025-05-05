@@ -107,10 +107,10 @@ abstract class Base extends TestCase
         $this->throttle_config = $config;
     }
 
-    protected function tearDown(): void
+    protected function setUp(): void
     {
-        parent::tearDown();
-        // 每次测试完毕都需要清理 runtime cache 目录，避免影响其他单元测试
+        parent::setUp();
+        // 每次单元测试都需要清理 runtime cache 目录，避免影响其他单元测试
         $cache_dir = GCApp::RUNTIME_PATH . "cache";
         $dirs = glob($cache_dir . '/*', GLOB_ONLYDIR);
         foreach ($dirs as $dir) {
@@ -125,7 +125,6 @@ abstract class Base extends TestCase
         }
         unset($cache_dir);
         unset($dirs);
-        gc_collect_cycles();    // 进行垃圾回收
     }
 
 }

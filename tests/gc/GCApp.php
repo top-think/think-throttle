@@ -60,4 +60,30 @@ class GCApp extends App
             $this->delete($name);
         }
     }
+
+    public function loadApp(string $appPath) : void {
+        if (is_file($appPath . 'common.php')) {
+            include_once $appPath . 'common.php';
+        }
+
+        $files = [];
+        $files = array_merge($files, glob($appPath . 'config' . DIRECTORY_SEPARATOR . '*' . $this->getConfigExt()));
+        foreach ($files as $file) {
+            $this->config->load($file, pathinfo($file, PATHINFO_FILENAME));
+        }
+
+        if (is_file($appPath . 'event.php')) {
+            $this->loadEvent(include $appPath . 'event.php');
+        }
+
+        if (is_file($appPath . 'app/middleware.php')) {
+            $this->middleware->import(include $appPath . 'app/middleware.php');
+        }
+
+        if (is_file($appPath . 'provider.php')) {
+            $this->bind(include $appPath . 'provider.php');
+        }
+        // 加载应用语言包
+        $this->loadLangPack($this->lang->defaultLangSet());
+    }
 }

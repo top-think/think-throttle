@@ -27,18 +27,19 @@ return [
     'key' => true,
     // 要被限制的请求类型, eg: GET POST PUT DELETE HEAD
     'visit_method' => ['GET'],
-    // 设置访问频率，例如 '10/m' 指的是允许每分钟请求10次。值 null 表示不限制， eg: null 10/m  20/h  300/d 200/300
+    // 设置访问频率，例如 '10/m' 指的是允许每分钟请求10次;'10/60'指允许每60秒请求10次。空字符串表示不限制， eg: '', '10/m', '20/h', '300/d', '200/300'
     'visit_rate' => '100/m',
     // 访问受限时返回的响应
     'visit_fail_response' => function (Throttle $throttle, Request $request, int $wait_seconds) {
-        return Response::create('Too many requests, try again after ' . $wait_seconds . ' seconds.')->code(429);
+        $content = str_replace('__WAIT__', (string)$wait_seconds, $throttle->getFailMessage());
+        return Response::create($content)->code(429);
     },
 ];
 ```
 
 当配置项满足以下条件任何一个时，不会限制访问频率：
-1. `key` 值为 `false` 或 `null`；
-2. `visit_rate` 值为 `null`。
+1. `key` 值为 `false` 或 `''`；
+2. `visit_rate` 值为 `''`。
 
 其中 `key` 用来设置缓存键的；而 `visit_rate` 用来设置访问频率，单位可以是秒，分，时，天，例如：`1/s`, `10/m`, `98/h`, `100/d` , 也可以是 `100/600` （600 秒内最多 100 次请求）。
 
@@ -81,19 +82,61 @@ Route::group(function() {
     'key' => '__CONTROLLER__/__ACTION__/__IP__',
 ]);
 ```
+
+示例五：使用注解配置（3.0.x版本支持）
+需要开启路由中间件，它有多种启用方式，这里以全局路由中间件为例，在 `config/route.php` 配置文件中添加: 
+```
+'middleware'    =>    [
+    \think\middleware\Throttle::class,
+],
+```
+控制器中使用：
+```
+<?php
+
+namespace app\controller;
+
+use app\BaseController;
+use think\middleware\annotation\RateLimit;
+
+class User extends BaseController
+{
+
+    #[RateLimit(rate: "10/m")]
+    public function index(): string
+    {
+        // 默认为IP限流，默认单位时间为1秒
+        return '每个ip每秒最多10个请求';
+    }
+
+    #[RateLimit(rate: "1/d", key: RateLimit::SESSION, message: '每个用户每天只能领取一次优惠券')]
+    #[RateLimit(rate: '100/d', key: 'coupon', message: '今天的优惠券已经发完，请明天再来')]
+    public function coupon(): string
+    {
+        return '优惠券发送成功';
+    }
+
+}
+```
 ## 版本与 TP 适配关系
 ```
+3.0.x -> thinkphp 8.0
 2.0.x -> thinkphp 8.0
 1.x.x -> thinkphp 6.0/6.1
 0.5.x -> thinkphp 5.1
 ```
 
 ## 更新日志
+版本 3.0.x 配置微调，不支持无缝升级；
+
 版本 2.0.x 的可从 1.x 无缝升级；
 
 版本 1.3.x 的配置形式完全兼容版本 1.2.x 内容，可以无缝升级；
 
 版本 1.2.x 的配置形式完全兼容版本 1.1.x 内容，可以无缝升级；
+
+### 3.0.x 更新
+- 支持注解方式；
 
 ### 2.0.x 更新
 - 适配 thinkphp 8.0；

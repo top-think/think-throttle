@@ -12,11 +12,12 @@ class RateLimit
 {
     const AUTO = true;
     const IP = '__IP__';
+    const SESSION = '__SESSION__';
 
-    public function __construct(public string                   $rate,
-                                public string|bool|Closure|null $key = RateLimit::AUTO,
-                                public string                   $driver = CounterFixed::class,
-                                public string                   $message = 'Too Many Requests')
+    public function __construct(public string              $rate,
+                                public string|bool|Closure $key = RateLimit::AUTO,
+                                public string              $driver = CounterFixed::class,
+                                public string              $message = 'Too Many Requests')
     {
 
     }
