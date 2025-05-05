@@ -28,7 +28,7 @@ return [
     'visit_enable_show_rate_limit' => true,
     // 访问受限时返回的响应
     'visit_fail_response' => function (Throttle $throttle, Request $request, int $wait_seconds) {
-        $content = str_replace('__WAIT__', (string)$wait_seconds, $throttle->getFailMessage());
+        $content = str_replace(Throttle::WAIT, (string)$wait_seconds, $throttle->getFailMessage());
         return Response::create($content)->code(429);
     },
 ];
