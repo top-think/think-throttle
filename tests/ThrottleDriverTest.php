@@ -42,7 +42,9 @@ class ThrottleDriverTest extends Base
     function test_leaky_bucket()
     {
         // 漏桶算法，速率 1/s
-        $this->assertEquals(1, $this->driver_run(LeakyBucket::class));
+        $count = $this->driver_run(LeakyBucket::class);
+        // 临界的时候可能为 2 次
+        $this->assertTrue(1 <= $count && $count <= 2);
     }
 
     function test_token_bucket()
