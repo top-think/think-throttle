@@ -161,10 +161,12 @@ class Throttle
      * @param string $driver
      * @return string
      */
-    protected function getCacheKey(Request $request, string|bool|Closure $key, string $driver, bool $annotation = false): string
+    protected function getCacheKey(Request $request, string|bool|array|Closure $key, string $driver, bool $annotation = false): string
     {
         if ($key instanceof Closure) {
             $key = Container::getInstance()->invokeFunction($key, [$this, $request]);
+        } elseif (is_array($key)) {
+            $key = $key();
         }
 
         if ($key === false || $key === '') {
