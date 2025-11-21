@@ -72,7 +72,7 @@ class AnnotationTest extends Base
         foreach ($result as $count) {
             $this->assertEquals(1, $count);
         }
-        // 继续领取知道所有优惠券都领完
+        // 继续领取直到所有优惠券都领完
         for ($i = 0; $i < 200; $i++) {
             $request = create_request($uri);
             $request->SetRealIP(sprintf('127.0.0.%d', $i));
@@ -82,4 +82,12 @@ class AnnotationTest extends Base
         }
         $this->assertEquals(100, $totalCount);
     }
+
+    // 注解支持使用[类, 静态方法]的方式获取key
+    function test_class_method_key() {
+        $this->assertEquals(5, $this->visit_uri_success_count('/user/sendSms2?mobile=123', 50));
+        $this->assertEquals(5, $this->visit_uri_success_count('/user/sendSms2?mobile=456', 20));
+        $this->assertEquals(5, $this->visit_uri_success_count('/user/sendSms2?mobile=789', 20));
+    }
+
 }

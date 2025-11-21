@@ -16,10 +16,10 @@ class RateLimit
     const CONTROLLER = '__CONTROLLER__';
     const ACTION = '__ACTION__';
 
-    public function __construct(public string              $rate,
-                                public string|bool|Closure $key = RateLimit::AUTO,
-                                public string              $driver = CounterFixed::class,
-                                public string              $message = 'Too Many Requests')
+    public function __construct(public string                       $rate,
+                                public string|bool|array|Closure    $key = RateLimit::AUTO,
+                                public string                       $driver = CounterFixed::class,
+                                public string                       $message = 'Too Many Requests')
     {
 
     }

@@ -42,7 +42,11 @@ abstract class Base extends TestCase
      */
     function create_request(string $uri, string $method = 'GET', string $host = '127.0.0.1', array $data = [], array $headers = []): Request
     {
-        $request = new Request();
+        $res = parse_url($uri);
+        if (isset($res['query'])) {
+            parse_str($res['query'], $_GET);    // 需要在创建 Request 实例之前处理 $_GET
+        }
+        $request = Request::__make(new GCApp());
         $request->setMethod($method);
         $request->setHost($host);
         $request->setDomain($host);
