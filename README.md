@@ -116,6 +116,21 @@ class User extends BaseController
         return '优惠券发送成功';
     }
 
+    #[RateLimit(rate: "5/d", key: [User::class, 'getMobile'], message: '每个手机号一天最多5条短信')]
+    public function sendSms2(): string
+    {
+        return '短信发送成功';
+    }
+
+    /**
+     * 自定义key，获取手机号，必须是静态方法
+     * @return string
+     */
+    public static function getMobile(): string
+    {
+        return request()->get('mobile');
+    }
+
 }
 ```
 ## 版本与 TP 适配关系
