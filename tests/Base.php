@@ -46,7 +46,8 @@ abstract class Base extends TestCase
         if (isset($res['query'])) {
             parse_str($res['query'], $_GET);    // 需要在创建 Request 实例之前处理 $_GET
         }
-        $request = Request::__make(new GCApp());
+        $app = new GCApp();
+        $request = Request::__make($app);
         $request->setMethod($method);
         $request->setHost($host);
         $request->setDomain($host);
@@ -59,6 +60,8 @@ abstract class Base extends TestCase
         $request->setBaseUrl($path);
         $path_info = empty($path) || '/' == $path ? '' : ltrim($path, '/');
         $request->setPathinfo($path_info);
+        $app->refClear();   // 为了 Request::__make 中$app->env而创建的实例，Request 实例创建后就可用销毁了
+        unset($app);
         return $request;
     }
 
