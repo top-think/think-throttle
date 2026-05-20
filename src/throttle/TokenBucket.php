@@ -18,7 +18,10 @@ class TokenBucket extends ThrottleAbstract
      */
     public function allowRequest(string $key, float $micro_now, int $max_requests, int $duration, CacheInterface $cache): bool
     {
-        if ($max_requests <= 0 || $duration <= 0) return false;
+        if ($max_requests <= 0 || $duration <= 0) {
+            $this->wait_seconds = $duration;
+            return false;
+        }
 
         $assist_key = $key . 'store_num';              // 辅助缓存
         $rate = (float)$max_requests / $duration;     // 平均一秒生成 n 个 token
