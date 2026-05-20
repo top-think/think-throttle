@@ -19,7 +19,10 @@ class LeakyBucket extends ThrottleAbstract
      */
     public function allowRequest(string $key, float $micro_now, int $max_requests, int $duration, CacheInterface $cache): bool
     {
-        if ($max_requests <= 0) return false;
+        if ($max_requests <= 0) {
+            $this->wait_seconds = $duration;
+            return false;
+        }
 
         $last_time = (float)$cache->get($key, 0);      // 最近一次请求
         $rate = (float)$duration / $max_requests;       // 平均 n 秒一个请求
