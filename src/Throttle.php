@@ -98,10 +98,36 @@ class Throttle
             $this->config = array_merge($this->config, $params);
         }
 
-        $allow = $this->allowRequestByAnnotation($request) && $this->allowRequestByConfig($request);
-        if (!$allow) {
-            // 访问受限
+        $annotationAllow = $this->allowRequestByAnnotation($request);
+        // 保存注解检查后的限流状态
+        $annotationState = [
+            'wait_seconds' => $this->wait_seconds,
+            'now' => $this->now,
+            'max_requests' => $this->max_requests,
+            'expire' => $this->expire,
+            'remaining' => $this->remaining,
+            'fail_text' => $this->config['visit_fail_text'] ?? '',
+        ];
+
+        $configAllow = $this->allowRequestByConfig($request);
+
+        if (!$annotationAllow || !$configAllow) {
+            // 取两个检查中更严格的 wait_seconds
+            if (!$annotationAllow && !$configAllow) {
+                $this->wait_seconds = max($annotationState['wait_seconds'], $this->wait_seconds);
+            } elseif (!$annotationAllow) {
+                $this->wait_seconds = $annotationState['wait_seconds'];
+                $this->config['visit_fail_text'] = $annotationState['fail_text'];
+            }
             throw $this->buildLimitException($this->wait_seconds, $request);
+        }
+
+        // 两个检查都通过时，取更严格的限流状态用于响应头
+        if ($annotationState['remaining'] < $this->remaining) {
+            $this->now = $annotationState['now'];
+            $this->max_requests = $annotationState['max_requests'];
+            $this->expire = $annotationState['expire'];
+            $this->remaining = $annotationState['remaining'];
         }
         $response = $next($request);
         if (200 <= $response->getCode() && 300 > $response->getCode() && $this->config['visit_enable_show_rate_limit']) {
