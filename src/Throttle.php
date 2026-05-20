@@ -261,7 +261,11 @@ class Throttle
      */
     protected function parseRate(string $rate): array
     {
-        [$num, $period] = explode("/", $rate);
+        $parts = explode("/", $rate);
+        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
+            throw new \InvalidArgumentException("Invalid rate format: '{$rate}', expected format like '10/m', '20/h', '300/d'");
+        }
+        [$num, $period] = $parts;
         $max_requests = (int)$num;
         $duration = static::$duration[$period] ?? (int)$period;
         return [$max_requests, $duration];
