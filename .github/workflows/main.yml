@@ -28,5 +28,7 @@ jobs:
           php -m
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
+      - name: Run PHPStan
+        run: php ./vendor/bin/phpstan analyse
       - name: Run test suite
         run: php ./vendor/bin/phpunit tests

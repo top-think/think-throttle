@@ -194,7 +194,7 @@ class Throttle
     /**
      * 是否允许请求
      * @param string $key
-     * @param mixed $rate
+     * @param string $rate
      * @param string $driver
      * @return bool
      */
