@@ -29,6 +29,10 @@ class CounterSlider extends ThrottleAbstract
         if ($this->cur_requests < $max_requests) {
             // 允许访问
             $history[] = $now;
+            // 只保留窗口内的记录，防止数组无限增长
+            if (count($history) > $max_requests * 2) {
+                $history = array_slice($history, -$max_requests);
+            }
             $cache->set($key, $history, $duration);
             return true;
         }
