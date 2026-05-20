@@ -71,6 +71,9 @@ class Throttle
     protected int $expire = 0;          // 规定时间
     protected int $remaining = 0;       // 规定时间内还能请求的次数
 
+    // 驱动实例缓存，避免每次请求重复实例化
+    protected array $driverInstances = [];
+
     /**
      * Throttle constructor.
      * @param Cache $cache
@@ -235,22 +238,26 @@ class Throttle
 
         $micro_now = microtime(true);   // float
 
-        $driver = Container::getInstance()->invokeClass($driver);
-        if (!($driver instanceof ThrottleAbstract)) {
-            throw new TypeError('The throttle driver must extends ' . ThrottleAbstract::class);
+        if (!isset($this->driverInstances[$driver])) {
+            $driverInstance = Container::getInstance()->invokeClass($driver);
+            if (!($driverInstance instanceof ThrottleAbstract)) {
+                throw new TypeError('The throttle driver must extends ' . ThrottleAbstract::class);
+            }
+            $this->driverInstances[$driver] = $driverInstance;
         }
-        $allow = $driver->allowRequest($key, $micro_now, $max_requests, $duration, $this->cache);
+        $driverInstance = $this->driverInstances[$driver];
+        $allow = $driverInstance->allowRequest($key, $micro_now, $max_requests, $duration, $this->cache);
 
         if ($allow) {
             // 允许访问
             $this->now = (int)$micro_now;
             $this->expire = $duration;
             $this->max_requests = $max_requests;
-            $this->remaining = $max_requests - $driver->getCurRequests();
+            $this->remaining = $max_requests - $driverInstance->getCurRequests();
             return true;
         }
 
-        $this->wait_seconds = $driver->getWaitSeconds();
+        $this->wait_seconds = $driverInstance->getWaitSeconds();
         return false;
     }
 
