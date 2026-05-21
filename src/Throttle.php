@@ -45,13 +45,6 @@ class Throttle
         'driver_name' => CounterFixed::class,       // 限流算法驱动
     ];
 
-    public static array $duration = [
-        's' => 1,
-        'm' => 60,
-        'h' => 3600,
-        'd' => 86400,
-    ];
-
     /**
      * 缓存对象
      * @var CacheInterface
