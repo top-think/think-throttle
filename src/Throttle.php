@@ -12,7 +12,9 @@ use think\Config;
 use think\Container;
 use think\exception\HttpResponseException;
 use think\middleware\annotation\RateLimit as RateLimitAnnotation;
+use think\middleware\throttle\CacheKeyBuilder;
 use think\middleware\throttle\CounterFixed;
+use think\middleware\throttle\RateParser;
 use think\middleware\throttle\ThrottleAbstract;
 use think\Request;
 use think\Response;
@@ -74,6 +76,8 @@ class Throttle
     // 驱动实例缓存，避免每次请求重复实例化
     protected array $driverInstances = [];
 
+    protected CacheKeyBuilder $cacheKeyBuilder;
+
     /**
      * Throttle constructor.
      * @param Cache $cache
@@ -86,6 +90,7 @@ class Throttle
         $this->app = $app;
         $this->config_instance = $config;
         $this->session = $session;
+        $this->cacheKeyBuilder = new CacheKeyBuilder($session, $this->config['prefix']);
     }
 
     /**
@@ -192,35 +197,7 @@ class Throttle
      */
     protected function getCacheKey(Request $request, string|bool|array|Closure $key, string $driver, bool $annotation = false): string
     {
-        if ($key instanceof Closure) {
-            $key = Container::getInstance()->invokeFunction($key, [$this, $request]);
-        } elseif (is_array($key)) {
-            if (!is_callable($key)) {
-                throw new \InvalidArgumentException('The array key must be a callable, e.g. [ClassName::class, "methodName"]');
-            }
-            $key = call_user_func($key);
-        }
-
-        if ($key === false || $key === '') {
-            return '';
-        }
-
-        if ($key === true) {
-            $key = $request->ip();
-        } elseif (is_string($key) && str_contains($key, '__')) {
-            $key = str_replace(
-                [RateLimitAnnotation::CONTROLLER, RateLimitAnnotation::ACTION, RateLimitAnnotation::IP, RateLimitAnnotation::SESSION],
-                [$request->controller(), $request->action(), $request->ip(), $this->session->getId()],
-                $key
-            );
-        }
-
-        if ($annotation) {
-            // 注解方式的需添加以实际方法作为前缀
-            $key = $request->controller() . $request->action() . $key;
-        }
-
-        return md5($this->config['prefix'] . $key . $driver);
+        return $this->cacheKeyBuilder->build($request, $key, $driver, $annotation);
     }
 
     /**
@@ -271,14 +248,7 @@ class Throttle
      */
     protected function parseRate(string $rate): array
     {
-        $parts = explode("/", $rate);
-        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
-            throw new \InvalidArgumentException("Invalid rate format: '{$rate}', expected format like '10/m', '20/h', '300/d'");
-        }
-        [$num, $period] = $parts;
-        $max_requests = (int)$num;
-        $duration = static::$duration[$period] ?? (int)$period;
-        return [$max_requests, $duration];
+        return RateParser::parse($rate);
     }
 
     /**
