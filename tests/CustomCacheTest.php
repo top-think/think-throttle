@@ -14,46 +14,68 @@ use think\Request;
 class CustomCache implements CacheInterface
 {
     protected array $data = [];
+    protected array $expire = [];
 
     public function get(string $key, mixed $default = null): mixed
     {
+        if (isset($this->expire[$key]) && $this->expire[$key] < time()) {
+            unset($this->data[$key], $this->expire[$key]);
+            return $default;
+        }
         return $this->data[$key] ?? $default;
     }
 
     public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
     {
         $this->data[$key] = $value;
+        if ($ttl !== null) {
+            $seconds = $ttl instanceof DateInterval ? (int)$ttl->s : $ttl;
+            $this->expire[$key] = time() + $seconds;
+        }
         return true;
     }
 
     public function delete(string $key): bool
     {
+        unset($this->data[$key], $this->expire[$key]);
         return true;
     }
 
     public function clear(): bool
     {
+        $this->data = [];
+        $this->expire = [];
         return true;
     }
 
     public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
-        return [];
+        $result = [];
+        foreach ($keys as $key) {
+            $result[$key] = $this->get($key, $default);
+        }
+        return $result;
     }
 
     public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
     {
+        foreach ($values as $key => $value) {
+            $this->set($key, $value, $ttl);
+        }
         return true;
     }
 
     public function deleteMultiple(iterable $keys): bool
     {
+        foreach ($keys as $key) {
+            $this->delete($key);
+        }
         return true;
     }
 
     public function has(string $key): bool
     {
-        return true;
+        return isset($this->data[$key]) && (!isset($this->expire[$key]) || $this->expire[$key] >= time());
     }
 }
 
