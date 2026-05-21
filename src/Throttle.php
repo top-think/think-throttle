@@ -195,21 +195,24 @@ class Throttle
         if ($key instanceof Closure) {
             $key = Container::getInstance()->invokeFunction($key, [$this, $request]);
         } elseif (is_array($key)) {
-            $key = $key();
+            if (!is_callable($key)) {
+                throw new \InvalidArgumentException('The array key must be a callable, e.g. [ClassName::class, "methodName"]');
+            }
+            $key = call_user_func($key);
         }
 
         if ($key === false || $key === '') {
-            // 不做限制
             return '';
         }
 
         if ($key === true) {
             $key = $request->ip();
         } elseif (is_string($key) && str_contains($key, '__')) {
-            $key = str_replace([RateLimitAnnotation::CONTROLLER, RateLimitAnnotation::ACTION, RateLimitAnnotation::IP,
-                RateLimitAnnotation::SESSION],
+            $key = str_replace(
+                [RateLimitAnnotation::CONTROLLER, RateLimitAnnotation::ACTION, RateLimitAnnotation::IP, RateLimitAnnotation::SESSION],
                 [$request->controller(), $request->action(), $request->ip(), $this->session->getId()],
-                $key);
+                $key
+            );
         }
 
         if ($annotation) {
