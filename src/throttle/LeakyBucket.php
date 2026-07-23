@@ -24,7 +24,8 @@ class LeakyBucket extends ThrottleAbstract
             return false;
         }
 
-        $last_time = (float)$cache->get($key, 0);      // 最近一次请求
+        // 部分情况缓存返回 false ，需防御处理
+        $last_time = (float)($cache->get($key, 0) ?: 0);      // 最近一次请求
         $rate = (float)$duration / $max_requests;       // 平均 n 秒一个请求
         if ($micro_now - $last_time < $rate) {
             $this->cur_requests = 1;

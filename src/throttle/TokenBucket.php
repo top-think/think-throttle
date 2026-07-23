@@ -26,10 +26,11 @@ class TokenBucket extends ThrottleAbstract
         $assist_key = $key . 'store_num';              // 辅助缓存
         $rate = (float)$max_requests / $duration;     // 平均一秒生成 n 个 token
 
-        $last_time = $cache->get($key, 0);
-        $store_num = $cache->get($assist_key, 0);
+        // 部分情况缓存返回 false ，需防御处理
+        $last_time = (float)($cache->get($key, 0) ?: 0);
+        $store_num = (int)($cache->get($assist_key, 0) ?: 0);
 
-        if ($last_time === 0 || $store_num === 0) {      // 首次访问
+        if ($last_time <= 0) {      // 首次访问
             $cache->set($key, $micro_now, $duration);
             $cache->set($assist_key, $max_requests - 1, $duration);
             return true;
