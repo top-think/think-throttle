@@ -19,7 +19,8 @@ class CounterFixed extends ThrottleAbstract
      */
     public function allowRequest(string $key, float $micro_now, int $max_requests, int $duration, CacheInterface $cache): bool
     {
-        $cur_requests = (int)$cache->get($key, 0);
+        // 部分情况缓存返回 false ，需防御处理
+        $cur_requests = (int)($cache->get($key, 0) ?: 0);
         $now = (int)$micro_now;
         $wait_reset_seconds = $duration - $now % $duration;     // 距离下次重置还有n秒时间
         $this->wait_seconds = $wait_reset_seconds % $duration + 1;
